@@ -3,3 +3,6 @@ yfinance
 google-generativeai
 pandas
 requests
+ccxt
+web3
+requests
