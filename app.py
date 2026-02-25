@@ -92,4 +92,4 @@ with c2:
         st.info(resp.text)
 
 st.markdown("---")
-st.caption("© 2026 AiCoincast | Secured by AI | Digital Excellence")
+st.caption("© 2026 AiCoincast.in | Secured by AI | Digital Excellence")
