@@ -4,178 +4,228 @@ import google.generativeai as genai
 import pandas as pd
 import requests
 import streamlit.components.v1 as components
-import re
 
 # ==========================================
-# 1. SYSTEM SETTINGS & BHARAT BRANDING
+# 1. SIGNATURE MIDNIGHT PURPLE BRANDING
 # ==========================================
 st.set_page_config(
-    page_title="AiCoincast India | Pro Crypto Terminal",
+    page_title="AiCoincast India | Pro Terminal",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# AI Setup with Security Shield
+# AI Engine Setup (Gemini Pro)
 if "GEMINI_API_KEY" in st.secrets:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     model = genai.GenerativeModel('gemini-pro')
 
-# Cyber Metallic Midnight Theme (Custom CSS)
+# Expanded CSS for Midnight Purple & News Colors
 st.markdown("""
     <style>
-    .main { background-color: #050A18; color: #FFFFFF; }
-    .stMetric { 
-        background-color: #0D1425; 
-        border: 1px solid #00F5FF; 
-        border-radius: 10px; 
-        padding: 15px; 
-        box-shadow: 0px 4px 10px rgba(0, 245, 255, 0.1);
+    /* Full Page: Midnight Purple */
+    .main { 
+        background-color: #1A1033; 
+        color: #FFFFFF; 
     }
-    .stTab { background-color: #0D1425; color: white; }
-    div[data-testid="stExpander"] { border: 1px solid #BC13FE; border-radius: 10px; }
+    /* Metric Cards */
+    .stMetric { 
+        background-color: #241744; 
+        border: 1px solid #BC13FE; 
+        border-radius: 12px; 
+        padding: 20px; 
+    }
+    /* Tabs Styling */
+    .stTab { 
+        background-color: #241744; 
+        color: white; 
+    }
+    /* AI Bot News: Pure Black Background */
+    .ai-news-card { 
+        background-color: #000000; 
+        border-left: 6px solid #00F5FF; 
+        padding: 25px; 
+        border-radius: 12px; 
+        margin-bottom: 20px; 
+    }
+    /* Human News: Midnight Blue Background */
+    .human-news-card { 
+        background-color: #161B22; 
+        border-left: 6px solid #00FF00; 
+        padding: 25px; 
+        border-radius: 12px; 
+        margin-bottom: 20px; 
+    }
     </style>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. CORE ALGORITHMS (DATA & SECURITY)
+# 2. CORE DATA ALGORITHMS
 # ==========================================
 @st.cache_data(ttl=120)
-def get_coingecko_data(coin_id=""):
+def get_global_indices():
+    indices = {
+        "🇮🇳 NIFTY 50": "^NSEI", 
+        "🇺🇸 NASDAQ": "^IXIC", 
+        "🌍 S&P 500": "^GSPC"
+    }
+    results = {}
+    for name, sym in indices.items():
+        try:
+            ticker = yf.Ticker(sym)
+            results[name] = ticker.history(period="1d")['Close'].iloc[-1]
+        except:
+            results[name] = "Live"
+    return results
+
+@st.cache_data(ttl=120)
+def get_crypto_30():
     try:
-        if coin_id:
-            url = f"https://api.coingecko.com/api/v3/coins/{coin_id}"
-            return requests.get(url).json()
-        else:
-            url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=30&page=1"
-            return requests.get(url).json()
-    except Exception as e:
+        api_url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=30&page=1"
+        response = requests.get(api_url)
+        return response.json()
+    except:
         return None
 
-def is_company_email(email):
-    public_domains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com"]
-    domain = email.split('@')[-1] if "@" in email else ""
-    return (domain not in public_domains and domain != ""), domain
-
-def news_card(title, content, source, author_type="AI"):
-    bg = "#000000" if author_type == "AI" else "#062c12"
-    border = "#00F5FF" if author_type == "AI" else "#00FF00"
-    label = "🤖 AI CRAWLER" if author_type == "AI" else "👤 OFFICIAL SOURCE"
-    st.markdown(f"""
-        <div style='background-color:{bg}; color:white; padding:20px; border-radius:10px; border-left:5px solid {border}; margin-bottom:15px;'>
-            <span style='color:{border}; font-weight:bold; font-size:11px;'>{label}</span>
-            <h3 style='margin-top:5px;'>{title}</h3>
-            <p style='font-size:14px;'>{content}</p>
-            <small style='opacity:0.7;'>Source: {source}</small>
-        </div>
-    """, unsafe_allow_html=True)
+def is_authorized(email):
+    # Corporate Domain Security Check
+    allowed_list = ["aicoincast.in", "reliance.com", "reliancedigital.in"]
+    user_domain = email.split('@')[-1] if "@" in email else ""
+    return user_domain in allowed_list
 
 # ==========================================
-# 3. UI COMPONENTS: TICKER & SIDEBAR
+# 3. UI COMPONENTS (TICKER & SIDEBAR)
 # ==========================================
-ticker_html = """
-<div style="background-color: #0D1425; color: #00F5FF; padding: 10px; font-family: sans-serif; border-bottom: 2px solid #00F5FF;">
-    <marquee scrollamount="6">
-        🚀 🇮🇳 AiCoincast India: Live Terminal | 30-Coin Tracker Active | 🛡️ AI Price-Alert System Live | Secured by Reliance Digital Experience Logic | Global Market Intelligence v4.3 Live...
+ticker_code = """
+<div style="background-color: #241744; color: #00F5FF; padding: 12px; border-bottom: 2px solid #BC13FE;">
+    <marquee scrollamount="7">
+        🚀 AiCoincast India: Global Indices & 30+ Crypto Assets Live | 🛡️ Official AI News Desk v5.2 | Midnight Purple Edition Active...
     </marquee>
 </div>
 """
-components.html(ticker_html, height=50)
+components.html(ticker_code, height=60)
 
 with st.sidebar:
-    st.title("🏢 Partner Portal")
-    email = st.text_input("Enter Company Email", placeholder="user@aicoincast.in")
-    if st.button("Verify & Login"):
-        valid, dom = is_company_email(email)
-        if valid:
-            st.success(f"Security Verified: {dom}")
+    st.title("👤 Partner Portal")
+    st.caption("Secure Login for News Desk")
+    auth_email = st.text_input("Enter Official Email", placeholder="user@aicoincast.in")
+    is_admin = False
+    if st.button("Login to Dashboard"):
+        if is_authorized(auth_email):
+            st.success("Access Granted")
+            is_admin = True
         else:
-            st.error("Official Corporate Email Required")
+            st.error("Corporate Domain Required")
     st.divider()
-    st.info("Branding: National Crypto Hub")
+    st.info("Branding: Samastipur to Global Vision")
 
-st.title("🛡️ AiCoincast India")
-st.caption("National AI-Powered Financial Terminal | Samastipur to Global Vision")
+st.title("🛡️ AiCoincast India Terminal")
+st.caption("National AI-Powered Finance Terminal | Secured by Gemini AI")
 
 # ==========================================
-# 4. TABBED INTERFACE (THE MAIN TOOLS)
+# 4. GLOBAL INDICES SECTION
 # ==========================================
-tab1, tab2, tab3 = st.tabs(["⚡ 30-Coin Tracker", "📊 Analysis & Comparison", "📰 Intelligence Hub"])
+st.write("### 🌍 Global Share Market Indices")
+market_indices = get_global_indices()
+index_cols = st.columns(3)
+for i, (name, value) in enumerate(market_indices.items()):
+    index_cols[i].metric(
+        name, 
+        f"{value:,.2f}" if isinstance(value, float) else value
+    )
 
-# TAB 1: LIVE TRACKER & ALERTS
+st.divider()
+
+# ==========================================
+# 5. THE MASTER TOOLS (4-TAB SYSTEM)
+# ==========================================
+tab1, tab2, tab3, tab4 = st.tabs([
+    "⚡ 30-Coin Tracker", 
+    "📊 Audit & Compare", 
+    "🏢 Corporate Assets", 
+    "✍️ AI News Desk"
+])
+
+# TAB 1: LIVE 30-COIN TRACKER
 with tab1:
-    market_data = get_coingecko_data()
-    if market_data:
-        # Price Alert Logic
-        alerts = [c for c in market_data if abs(c['price_change_percentage_24h']) > 5.0]
-        if alerts:
-            st.warning(f"🚨 ALERT: {len(alerts)} coins are showing High Volatility (>5%) in last 24h!")
+    crypto_data = get_crypto_30()
+    if crypto_data:
+        # Volatility Alerts
+        heavy_movers = [c for c in crypto_data if abs(c['price_change_percentage_24h']) > 5.0]
+        if heavy_movers:
+            st.warning(f"🚨 ALERT: {len(heavy_movers)} assets moving >5%!")
         
-        st.write("### ⚡ Live Top 30 National Tracker")
-        cols = st.columns(5)
-        for i, coin in enumerate(market_data):
-            cols[i % 5].metric(
+        st.write("### Live Top 30 National Tracker")
+        c_cols = st.columns(5)
+        for i, coin in enumerate(crypto_data):
+            c_cols[i % 5].metric(
                 coin['name'], 
                 f"${coin['current_price']:,}", 
                 f"{coin['price_change_percentage_24h']:.2f}%"
             )
     else:
-        st.error("Connection Issue. Please refresh in 1 minute.")
+        st.error("API Fetching... Please refresh in 60s.")
 
-# TAB 2: DEEP EXPLORER & 5-COIN TABLE
+# TAB 2: 5-COIN COMPARISON ENGINE
 with tab2:
-    if market_data:
-        st.write("### 🔍 Select Exactly 5 Coins for Side-by-Side Comparison")
-        selected = st.multiselect(
-            "Audit/Compare Selection", 
-            [c['id'] for c in market_data], 
-            default=[c['id'] for c in market_data][:5]
+    if crypto_data:
+        st.write("### 🔍 Professional 5-Coin Audit Table")
+        selected_ids = st.multiselect(
+            "Select 5 Assets", 
+            [c['id'] for c in crypto_data], 
+            default=[c['id'] for c in crypto_data][:5]
         )
-        
-        if len(selected) == 5:
-            comp_list = [c for c in market_data if c['id'] in selected]
-            df = pd.DataFrame(comp_list)[['name', 'current_price', 'market_cap', 'price_change_percentage_24h']]
-            df.columns = ['Name', 'Price (USD)', 'Market Cap', '24h Change (%)']
-            st.table(df)
-            
-            if st.button("Generate AI Market Intelligence"):
-                if "GEMINI_API_KEY" in st.secrets:
-                    with st.spinner("AI is analyzing global sentiment..."):
-                        prompt = f"Analyze market sentiment for these 5 coins in Hinglish: {', '.join(selected)}"
-                        resp = model.generate_content(prompt)
-                        st.info(resp.text)
+        if len(selected_ids) == 5:
+            audit_list = [c for c in crypto_data if c['id'] in selected_ids]
+            audit_df = pd.DataFrame(audit_list)[['name', 'current_price', 'market_cap', 'price_change_percentage_24h']]
+            st.table(audit_df)
         else:
-            st.info("Pro Tip: 5 coins select karein detailed table dekhne ke liye.")
+            st.info("Exactly 5 coins select karein.")
 
-# TAB 3: LEGACY NEWS & CORPORATE AUDIT
+# TAB 3: CORPORATE ASSET AUDIT (XRT, LAI, QRL)
 with tab3:
-    col_a, col_b = st.columns([2, 1])
-    
-    with col_a:
-        st.subheader("📰 Verified Intelligence Feed")
-        news_card("National Tech Surge", "Indian crypto adoption hits new highs in Q1 2026.", "Bloomberg India", "AI")
-        news_card("Security Protocol Active", "AI-Shield 3.0 successfully protecting terminal assets.", "AiCoincast Ops", "Human")
+    st.write("### 🏢 Specialized Project Deep-Dive")
+    projects = {
+        "XRT": "robonomics-network", 
+        "LAI": "layerai", 
+        "QRL": "quantum-resistant-ledger"
+    }
+    target = st.selectbox("Select Project", list(projects.keys()))
+    if st.button("Run On-Chain Audit"):
+        res = requests.get(f"https://api.coingecko.com/api/v3/coins/{projects[target]}").json()
+        st.metric("Price", f"${res['market_data']['current_price']['usd']:.4f}")
+        st.write(f"**Description:** {res['description']['en'][:450]}...")
+
+# TAB 4: MULTI-LANGUAGE NEWS & COLOR CODING
+with tab4:
+    st.subheader("🤖 AiCoincast AI News Bot")
+    if is_admin:
+        cat = st.selectbox("Category", ["Cryptocurrency", "Crypto Coins", "Crypto Wallets", "AI", "Metaverse", "Blockchain"])
+        title = st.text_input("News Heading")
+        lang = st.radio("Language", ["Hinglish", "Hindi", "English"], horizontal=True)
+        author = st.radio("Publisher Type", ["AI Bot (Black Card)", "Human/Official (Blue Card)"], horizontal=True)
         
-    with col_b:
-        st.subheader("🏢 Corporate Asset Audit")
-        asset_dict = {
-            "XRT": "robonomics-network", 
-            "LAI": "layerai", 
-            "QRL": "quantum-resistant-ledger"
-        }
-        choice = st.selectbox("Select Asset to Audit", list(asset_dict.keys()))
-        
-        if st.button("Fetch Deep Intel"):
-            res = get_coingecko_data(asset_dict[choice])
-            if res:
-                st.metric("Live Price", f"${res['market_data']['current_price']['usd']:.4f}")
-                st.metric("Global Ranking", f"#{res['market_cap_rank']}")
-                st.write(f"**Asset Intel:** {res['description']['en'][:400]}...")
-            else:
-                st.warning("Fetching on-chain data... please wait.")
+        if st.button("Publish News"):
+            with st.spinner("AI Writing..."):
+                gen_prompt = f"Write news about {title} in {lang}. Topic: {cat}. Reported by AiCoincast."
+                draft = model.generate_content(gen_prompt).text
+                
+                # COLOR CODED LOGIC
+                card_style = "ai-news-card" if "AI Bot" in author else "human-news-card"
+                badge = f"🤖 AI CRAWLER | {cat}" if "AI Bot" in author else f"👤 OFFICIAL SOURCE | {cat}"
+                
+                st.markdown(f"""
+                <div class='{card_style}'>
+                    <span style='font-weight:bold; font-size:12px; color:white;'>{badge.upper()}</span>
+                    <h3 style='color:white; margin-top:10px;'>{title}</h3>
+                    <p style='color:white; line-height:1.6;'>{draft}</p>
+                    <small style='color:white; opacity:0.6;'>Source: AiCoincast Terminal</small>
+                </div>
+                """, unsafe_allow_html=True)
+    else:
+        st.warning("⚠️ Access Denied: Sidebar se Login karein.")
 
 # ==========================================
-# 5. FOOTER & COMPLIANCE
+# 6. FOOTER
 # ==========================================
 st.divider()
-st.caption("© 2026 AiCoincast.in | India's Premier Crypto Terminal | Secured by Gemini AI | Digital Excellence")
-            
+st.caption("© 2026 AiCoincast.in | India's Digital Hub | v5.2 Master Code")
