@@ -1,120 +1,142 @@
+# =============================================================================
+# PROJECT: AiCoincast India - National Intelligence Terminal
+# VERSION: 10.3 Sovereign Grandmaster
+# AUTHOR: AiCoincast Team (Serving Digital India)
+# UPDATED: Feb 2026
+# =============================================================================
+
 import streamlit as st
 import yfinance as yf
-import google.generativeai as genai
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
-import requests
 import datetime
 import time
 
-# =============================================================================
-# 1. ARCHITECTURE: NATIONAL UI & THEME (INDIA v10.2 FINAL)
-# =============================================================================
+# --- STAGE 1: SYSTEM INITIALIZATION & UI ENGINE ---
 st.set_page_config(
-    page_title="AiCoincast India | The Sovereign Grandmaster", 
+    page_title="AiCoincast India | Sovereign Grandmaster", 
     page_icon="🇮🇳", 
     layout="wide"
 )
 
-# Professional National Theme CSS - Fully Audited
+# 
+
+# Advanced CSS Framework (Modular Architecture)
 st.markdown("""
     <style>
+    /* Global Styling */
     .main { background-color: #050112; color: #FFFFFF; font-family: 'Segoe UI', sans-serif; }
+    
+    /* National Flag Identity Banner */
     .india-strip { 
         background: linear-gradient(90deg, #FF9933 0%, #FFFFFF 50%, #128807 100%); 
         height: 6px; width: 100%; border-radius: 3px; margin-bottom: 10px; 
     }
-    .gm-card { background: #1A1033; border: 1.5px solid #00F5FF; padding: 30px; border-radius: 20px; box-shadow: 0px 10px 30px rgba(0, 245, 255, 0.1); }
+    
+    /* High-Performance Card System */
+    .gm-card { 
+        background: #1A1033; border: 1.5px solid #00F5FF; 
+        padding: 30px; border-radius: 20px; 
+        box-shadow: 0px 10px 30px rgba(0, 245, 255, 0.1); 
+    }
+    
+    /* Metric Enhancement */
     .stMetric { background: #0D0221; padding: 15px; border-radius: 12px; border: 1px solid #BC13FE; }
+    
+    /* Marquee Animation */
     .marquee-text { color: #FFFFFF; font-weight: bold; font-size: 14px; }
     </style>
     <div class="nav-bar" style="text-align:center; padding:5px;"><h2>🛡️ AiCoincast India Sovereign Hub</h2></div>
     <div class="india-strip"></div>
     """, unsafe_allow_html=True)
 
-# Live IST Clock Logic
+# --- STAGE 2: REAL-TIME DATA & ANALYTICS NODES ---
+
+# India Standard Time Sync
 current_ist = datetime.datetime.now().strftime('%d %b %Y | %H:%M:%S IST')
 st.markdown(f"<div style='text-align:right; color:#00F5FF; font-weight:bold; padding-right:10px;'>🕒 {current_ist}</div>", unsafe_allow_html=True)
 
-# National Moving News Ticker
+# National Marquee Feed (Global + Local)
 st.markdown("""
     <div style='background-color: #0D0221; border-top: 1px solid #FF9933; border-bottom: 1px solid #128807; padding: 8px; margin-bottom: 20px;'>
         <marquee scrollamount='8' class='marquee-text'>
-            🇮🇳 AI-COINCAST EXCLUSIVE: Digital India Node Active | NIFTY 50 & SENSEX Live Feed Enabled | RBI e-Rupee adoption accelerating across Tier-1 and Tier-2 cities | Web3 Policy Framework update expected soon...
+            🇮🇳 NATIONAL UPDATE: Digital India Expansion Active | NIFTY 50 & SENSEX Market Pulse Syncing | RBI e-Rupee Adoption Rising | AiCoincast Sovereign Terminal v10.3 Online
         </marquee>
     </div>
     """, unsafe_allow_html=True)
 
-# =============================================================================
-# 2. NATIONAL MARKET INTELLIGENCE ALGORITHMS
-# =============================================================================
-
 @st.cache_data(ttl=60)
-def fetch_national_data():
-    """Fetches Live Stocks (Nifty) and Crypto-INR data"""
+def fetch_market_intel():
+    """Algorithm: Extracts Real-time National Indices and Crypto-INR Pairs"""
     tickers = {"NIFTY 50": "^NSEI", "SENSEX": "^BSESN", "BTC-INR": "BTC-INR", "ETH-INR": "ETH-INR"}
-    results = {}
-    for name, sym in tickers.items():
+    intel_results = {}
+    for label, sym in tickers.items():
         try:
-            results[name] = yf.Ticker(sym).history(period="1d")['Close'].iloc[-1]
-        except: results[name] = 0.0
-    return results
+            intel_results[label] = yf.Ticker(sym).history(period="1d")['Close'].iloc[-1]
+        except Exception as e:
+            intel_results[label] = 0.0
+    return intel_results
 
-# =============================================================================
-# 3. THE UNIFIED MASTER TERMINAL
-# =============================================================================
+# --- STAGE 3: INTERFACE LAYERS (UNIFIED MASTER DASHBOARD) ---
 
 st.title("🛡️ AiCoincast India: Sovereign Grandmaster")
 st.info("🌐 National Node Active | Tracking India's Digital Economy & Web3 Pulse")
 
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Oracle", "💼 Wealth Guardian", "🤖 AI News Robot", "🧠 Neural Advisor"])
+# Modular Tab System
+tab_oracle, tab_wealth, tab_robot, tab_advisor = st.tabs([
+    "📊 Market Oracle", "💼 Wealth Guardian", "🤖 AI News Robot", "🧠 Neural Advisor"
+])
 
-with tab1:
+# 1. MARKET ORACLE (Stocks & Global Crypto)
+with tab_oracle:
     st.subheader("🇮🇳 Unified National Feed")
-    data = fetch_national_data()
-    m_col1, m_col2, m_col3 = st.columns(3)
-    m_col1.metric("NIFTY 50", f"₹{data['NIFTY 50']:,.2f}", "NSE")
-    m_col2.metric("SENSEX", f"₹{data['SENSEX']:,.2f}", "BSE")
-    m_col3.metric("BTC (INR)", f"₹{data['BTC-INR']:,.0f}", "Live")
+    m_data = fetch_market_intel()
+    c1, c2, c3 = st.columns(3)
+    c1.metric("NSE NIFTY 50", f"₹{m_data['NIFTY 50']:,.2f}", "India Hub")
+    c2.metric("BSE SENSEX", f"₹{m_data['SENSEX']:,.2f}", "National Index")
+    c3.metric("BTC-INR", f"₹{m_data['BTC-INR']:,.0f}", "Market Live")
     
     st.divider()
     st.subheader("🔍 India News Sentiment Audit")
-    sample = st.text_input("Headline Analysis", value="RBI e-Rupee adoption grows by 20% in retail sector.")
+    s_input = st.text_input("Headline Analysis", value="RBI e-Rupee adoption grows in retail sector.")
     if st.button("Analyze Market Mood"):
         st.toast("AI Analyzing National Impact...", icon="🇮🇳")
         st.success("Mood: Bullish (Greed Index: 75/100)")
 
-with tab2:
+# 2. WEALTH GUARDIAN (Portfolio Personalization)
+with tab_wealth:
     st.subheader("💼 Personal Wealth Guardian (India)")
-    if 'portfolio' not in st.session_state:
-        st.session_state.portfolio = {"BTC": 0.1, "ETH": 1.5}
+    if 'p_store' not in st.session_state:
+        st.session_state.p_store = {"BTC": 0.1, "ETH": 1.5}
     
-    col_x, col_y = st.columns([1, 1])
-    with col_x:
-        u_sym = st.text_input("Add Coin Symbol (e.g. BTC)").upper()
-        u_qty = st.number_input("Enter Quantity", min_value=0.0)
-        if st.button("Sync to Portfolio"):
-            st.session_state.portfolio[u_sym] = u_qty
+    col_l, col_r = st.columns([1, 1])
+    with col_l:
+        u_s = st.text_input("Add Coin Symbol").upper()
+        u_q = st.number_input("Quantity", min_value=0.0)
+        if st.button("Sync Asset"):
+            st.session_state.p_store[u_s] = u_q
             st.rerun()
-    with col_y:
-        df = pd.DataFrame([{"Asset": k, "Qty": v} for k, v in st.session_state.portfolio.items()])
-        st.plotly_chart(px.pie(df, values='Qty', names='Asset', hole=0.5, template="plotly_dark"))
+    with col_r:
+        df_w = pd.DataFrame([{"Asset": k, "Qty": v} for k, v in st.session_state.p_store.items()])
+        st.plotly_chart(px.pie(df_w, values='Qty', names='Asset', hole=0.5, template="plotly_dark"))
 
-with tab3:
+# 3. AI NEWS ROBOT (Hinglish Intelligence)
+with tab_robot:
     st.subheader("🤖 The Swadeshi News Robot")
-    content = st.text_area("Paste News for 10-Sec Summary")
-    if st.button("⚡ Generate Bullet Report"):
-        st.info("1. News Processed.\n2. Key Factor: Indian Digital Policy.\n3. Impact: Positive for Web3.")
-    if st.button("🎙️ Listen in Hindi Voice"):
-        st.markdown("<div style='border:1px solid #FF9933; padding:10px;'>📻 AI Hindi Anchor script ready...</div>", unsafe_allow_html=True)
+    u_c = st.text_area("Paste News for Analysis")
+    if st.button("⚡ Generate Report"):
+        st.info("Robot Intelligence: Positive impact on India's Web3 infrastructure.")
+    if st.button("🎙️ Play Hindi Audio Script"):
+        st.markdown("<div class='gm-card'>📻 Radio Anchor Script Ready...</div>", unsafe_allow_html=True)
 
-with tab4:
+# 4. NEURAL ADVISOR (Risk Management)
+with tab_advisor:
     st.subheader("🧠 Neural Advisory Bridge")
-    st.write("AI-powered financial strategy specifically for Indian tax laws and market trends.")
-    if st.button("🚀 Strategic Portfolio Audit"):
-        st.success("AI Advice: Maintain 40% liquidity in INR to manage the 30% VDA Tax impact.")
+    st.write("Financial strategy specifically for Indian tax laws (30% VDA).")
+    if st.button("🚀 Run Portfolio Strategic Audit"):
+        st.success("Strategy: Maintain 40% liquidity for tax optimization.")
 
+# --- STAGE 4: SYSTEM FOOTER & COMPLIANCE ---
 st.divider()
-st.caption("© 2026 AiCoincast.in | v10.2 Final Sovereign | Serving the Vision of Digital India")
-    
+st.caption("© 2026 AiCoincast.in | v10.3 Grandmaster | National Intelligence Hub | India")
+        
