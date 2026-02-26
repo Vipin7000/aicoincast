@@ -5,3 +5,6 @@ pandas
 plotly
 requests
 gTTS
+pytz
+scikit-learn
+numpy
