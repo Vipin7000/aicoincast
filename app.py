@@ -1,142 +1,135 @@
-# =============================================================================
-# PROJECT: AiCoincast India - National Intelligence Terminal
-# VERSION: 10.3 Sovereign Grandmaster
-# AUTHOR: AiCoincast Team (Serving Digital India)
-# UPDATED: Feb 2026
-# =============================================================================
-
 import streamlit as st
+import google.generativeai as genai
 import yfinance as yf
 import pandas as pd
-import plotly.express as px
-import datetime
-import time
+import numpy as np
+import plotly.graph_objects as go
+from gtts import gTTS
+import io
+import hashlib
+import requests
+from datetime import datetime
+import pytz
+from sklearn.linear_model import LinearRegression
 
-# --- STAGE 1: SYSTEM INITIALIZATION & UI ENGINE ---
-st.set_page_config(
-    page_title="AiCoincast India | Sovereign Grandmaster", 
-    page_icon="🇮🇳", 
-    layout="wide"
-)
+# --- 1. CORE CONFIGURATION & IST TIME ---
+st.set_page_config(page_title="AiCoincast India: Master Terminal", layout="wide")
+IST = pytz.timezone('Asia/Kolkata')
+ist_now = datetime.now(IST).strftime('%d %b %Y | %H:%M:%S IST')
 
-# 
+# --- 2. SECURITY: BOT AUTHENTICATION ALGORITHM ---
+def generate_bot_token(bot_id):
+    return f"AIC-{hashlib.sha256(bot_id.encode()).hexdigest()[:12].upper()}"
 
-# Advanced CSS Framework (Modular Architecture)
+# --- 3. DATA: UNIVERSAL CRYPTO FETCHING ---
+def get_universal_crypto(coin_id):
+    try:
+        url = f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=inr,usd&include_24hr_change=true"
+        response = requests.get(url, timeout=5)
+        return response.json().get(coin_id)
+    except: return None
+
+# --- 4. PREDICTION: 7-DAY FORECAST ALGORITHM ---
+def get_ai_forecast(symbol):
+    try:
+        data = yf.download(symbol, period='60d', interval='1d')
+        if data.empty: return None
+        df = data[['Close']].reset_index()
+        df['Day_Num'] = np.arange(len(df))
+        model = LinearRegression().fit(df[['Day_Num']], df['Close'])
+        future_days = np.array([len(df) + i for i in range(7)]).reshape(-1, 1)
+        preds = model.predict(future_days)
+        future_dates = [df['Date'].iloc[-1] + pd.Timedelta(days=i) for i in range(1, 8)]
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=df['Date'], y=df['Close'], name='Market', line=dict(color='#00ffcc')))
+        fig.add_trace(go.Scatter(x=future_dates, y=preds, name='AI Forecast', line=dict(dash='dash', color='#ffcc00')))
+        fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=0,r=0,t=30,b=0))
+        return fig
+    except: return None
+
+# --- 5. UI BRANDING ---
 st.markdown("""
     <style>
-    /* Global Styling */
-    .main { background-color: #050112; color: #FFFFFF; font-family: 'Segoe UI', sans-serif; }
-    
-    /* National Flag Identity Banner */
-    .india-strip { 
-        background: linear-gradient(90deg, #FF9933 0%, #FFFFFF 50%, #128807 100%); 
-        height: 6px; width: 100%; border-radius: 3px; margin-bottom: 10px; 
-    }
-    
-    /* High-Performance Card System */
-    .gm-card { 
-        background: #1A1033; border: 1.5px solid #00F5FF; 
-        padding: 30px; border-radius: 20px; 
-        box-shadow: 0px 10px 30px rgba(0, 245, 255, 0.1); 
-    }
-    
-    /* Metric Enhancement */
-    .stMetric { background: #0D0221; padding: 15px; border-radius: 12px; border: 1px solid #BC13FE; }
-    
-    /* Marquee Animation */
-    .marquee-text { color: #FFFFFF; font-weight: bold; font-size: 14px; }
+    .main { background-color: #0e1117; color: white; }
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .stTabs [data-baseweb="tab"] { background-color: #1e2130; border-radius: 5px; padding: 10px; }
+    .verified-card { border-left: 5px solid #138808; background: #1a1c24; padding: 15px; border-radius: 5px; margin: 10px 0; }
     </style>
-    <div class="nav-bar" style="text-align:center; padding:5px;"><h2>🛡️ AiCoincast India Sovereign Hub</h2></div>
-    <div class="india-strip"></div>
     """, unsafe_allow_html=True)
 
-# --- STAGE 2: REAL-TIME DATA & ANALYTICS NODES ---
+# --- 6. SIDEBAR & API ---
+st.sidebar.title("🛡️ Master Control")
+st.sidebar.info(f"🕒 **IST:** {ist_now}")
+api_key = st.secrets.get("GEMINI_API_KEY", "")
+if api_key: genai.configure(api_key=api_key)
 
-# India Standard Time Sync
-current_ist = datetime.datetime.now().strftime('%d %b %Y | %H:%M:%S IST')
-st.markdown(f"<div style='text-align:right; color:#00F5FF; font-weight:bold; padding-right:10px;'>🕒 {current_ist}</div>", unsafe_allow_html=True)
+# --- 7. MAIN INTERFACE ---
+st.title("🛡️ AiCoincast India: Sovereign Master Node")
+st.markdown("---")
 
-# National Marquee Feed (Global + Local)
-st.markdown("""
-    <div style='background-color: #0D0221; border-top: 1px solid #FF9933; border-bottom: 1px solid #128807; padding: 8px; margin-bottom: 20px;'>
-        <marquee scrollamount='8' class='marquee-text'>
-            🇮🇳 NATIONAL UPDATE: Digital India Expansion Active | NIFTY 50 & SENSEX Market Pulse Syncing | RBI e-Rupee Adoption Rising | AiCoincast Sovereign Terminal v10.3 Online
-        </marquee>
-    </div>
-    """, unsafe_allow_html=True)
+tab1, tab2, tab3, tab4 = st.tabs(["🤝 Bot Alliance", "📈 AI Prediction", "🌍 Universal Crypto", "👨‍💻 API Docs"])
 
-@st.cache_data(ttl=60)
-def fetch_market_intel():
-    """Algorithm: Extracts Real-time National Indices and Crypto-INR Pairs"""
-    tickers = {"NIFTY 50": "^NSEI", "SENSEX": "^BSESN", "BTC-INR": "BTC-INR", "ETH-INR": "ETH-INR"}
-    intel_results = {}
-    for label, sym in tickers.items():
-        try:
-            intel_results[label] = yf.Ticker(sym).history(period="1d")['Close'].iloc[-1]
-        except Exception as e:
-            intel_results[label] = 0.0
-    return intel_results
-
-# --- STAGE 3: INTERFACE LAYERS (UNIFIED MASTER DASHBOARD) ---
-
-st.title("🛡️ AiCoincast India: Sovereign Grandmaster")
-st.info("🌐 National Node Active | Tracking India's Digital Economy & Web3 Pulse")
-
-# Modular Tab System
-tab_oracle, tab_wealth, tab_robot, tab_advisor = st.tabs([
-    "📊 Market Oracle", "💼 Wealth Guardian", "🤖 AI News Robot", "🧠 Neural Advisor"
-])
-
-# 1. MARKET ORACLE (Stocks & Global Crypto)
-with tab_oracle:
-    st.subheader("🇮🇳 Unified National Feed")
-    m_data = fetch_market_intel()
-    c1, c2, c3 = st.columns(3)
-    c1.metric("NSE NIFTY 50", f"₹{m_data['NIFTY 50']:,.2f}", "India Hub")
-    c2.metric("BSE SENSEX", f"₹{m_data['SENSEX']:,.2f}", "National Index")
-    c3.metric("BTC-INR", f"₹{m_data['BTC-INR']:,.0f}", "Market Live")
+# --- TAB 1: BOT ALLIANCE (GUEST BOTS & SOUND) ---
+with tab1:
+    st.subheader("🤖 Invite & Verify AI Bots")
+    c1, c2 = st.columns(2)
+    with c1: guest_id = st.text_input("Bot Name", "CryptoX-Bot")
+    with c2: guest_token = st.text_input("Auth Token", type="password")
     
-    st.divider()
-    st.subheader("🔍 India News Sentiment Audit")
-    s_input = st.text_input("Headline Analysis", value="RBI e-Rupee adoption grows in retail sector.")
-    if st.button("Analyze Market Mood"):
-        st.toast("AI Analyzing National Impact...", icon="🇮🇳")
-        st.success("Mood: Bullish (Greed Index: 75/100)")
+    news_payload = st.text_area("Guest Bot News Feed:", height=150)
+    lang = st.radio("Output Language:", ["Hindi", "English"], horizontal=True)
 
-# 2. WEALTH GUARDIAN (Portfolio Personalization)
-with tab_wealth:
-    st.subheader("💼 Personal Wealth Guardian (India)")
-    if 'p_store' not in st.session_state:
-        st.session_state.p_store = {"BTC": 0.1, "ETH": 1.5}
-    
-    col_l, col_r = st.columns([1, 1])
-    with col_l:
-        u_s = st.text_input("Add Coin Symbol").upper()
-        u_q = st.number_input("Quantity", min_value=0.0)
-        if st.button("Sync Asset"):
-            st.session_state.p_store[u_s] = u_q
-            st.rerun()
-    with col_r:
-        df_w = pd.DataFrame([{"Asset": k, "Qty": v} for k, v in st.session_state.p_store.items()])
-        st.plotly_chart(px.pie(df_w, values='Qty', names='Asset', hole=0.5, template="plotly_dark"))
+    if st.button("⚡ Authenticate & Generate Master Report"):
+        if guest_token == generate_bot_token(guest_id):
+            st.success(f"Verified: {guest_id} connection secure.")
+            with st.spinner("Sovereign Master is processing..."):
+                model = genai.GenerativeModel('gemini-pro')
+                p_lang = "Hindi" if lang == "Hindi" else "English"
+                res = model.generate_content(f"Verify and rewrite this news from {guest_id} for India in {p_lang}: {news_payload}")
+                st.session_state.final_output = res.text
+                st.session_state.lang_code = 'hi' if lang == "Hindi" else 'en'
+                st.markdown(f"<div class='verified-card'>{res.text}</div>", unsafe_allow_html=True)
+        else: st.error("Access Denied: Invalid Token.")
 
-# 3. AI NEWS ROBOT (Hinglish Intelligence)
-with tab_robot:
-    st.subheader("🤖 The Swadeshi News Robot")
-    u_c = st.text_area("Paste News for Analysis")
-    if st.button("⚡ Generate Report"):
-        st.info("Robot Intelligence: Positive impact on India's Web3 infrastructure.")
-    if st.button("🎙️ Play Hindi Audio Script"):
-        st.markdown("<div class='gm-card'>📻 Radio Anchor Script Ready...</div>", unsafe_allow_html=True)
+    if st.button("🔊 Play Verified Audio"):
+        if 'final_output' in st.session_state:
+            tts = gTTS(text=st.session_state.final_output, lang=st.session_state.lang_code)
+            fp = io.BytesIO()
+            tts.write_to_fp(fp)
+            fp.seek(0)
+            st.audio(fp, format='audio/mp3')
 
-# 4. NEURAL ADVISOR (Risk Management)
-with tab_advisor:
-    st.subheader("🧠 Neural Advisory Bridge")
-    st.write("Financial strategy specifically for Indian tax laws (30% VDA).")
-    if st.button("🚀 Run Portfolio Strategic Audit"):
-        st.success("Strategy: Maintain 40% liquidity for tax optimization.")
+# --- TAB 2: AI PREDICTION ---
+with tab2:
+    st.subheader("🚀 7-Day Trend Forecasting")
+    coin_p = st.selectbox("Select Asset", ["BTC-USD", "ETH-USD", "SOL-USD", "MATIC-USD"])
+    if st.button("📈 Run AI Prediction"):
+        fig = get_ai_forecast(coin_p)
+        if fig: st.plotly_chart(fig, use_container_width=True)
 
-# --- STAGE 4: SYSTEM FOOTER & COMPLIANCE ---
-st.divider()
-st.caption("© 2026 AiCoincast.in | v10.3 Grandmaster | National Intelligence Hub | India")
-        
+# --- TAB 3: UNIVERSAL CRYPTO (XRT, LAI, QRL FIX) ---
+with tab3:
+    st.subheader("🌍 Universal Coin Tracker")
+    user_coin = st.text_input("Enter Coin ID (e.g. robonomics-network-xrt, layerai, quantum-resistant-ledger)", "bitcoin")
+    if st.button("🔍 Fetch Global Data"):
+        data = get_universal_crypto(user_coin)
+        if data:
+            st.metric(f"{user_coin.upper()} Price (USD)", f"${data['usd']:.4f}", f"{data['usd_24h_change']:.2f}%")
+            st.metric(f"{user_coin.upper()} Price (INR)", f"₹{data['inr']:.2f}")
+        else: st.error("Coin not found. Use CoinGecko ID.")
+
+# --- TAB 4: DEVELOPER API ---
+with tab4:
+    st.subheader("👨‍💻 Alliance Documentation")
+    st.write("Invitation to External AI Bots: Generate your token here.")
+    dev_name = st.text_input("Your Bot Name:")
+    if dev_name:
+        st.code(f"Your Token: {generate_bot_token(dev_name)}")
+    st.markdown("---")
+    st.info("Sovereign Protocol v11.0 Active")
+
+# --- NATIONAL MARKET PULSE (Footer) ---
+st.markdown("---")
+nifty = yf.Ticker("^NSEI").history(period="1d")['Close'].iloc[-1]
+st.sidebar.metric("NSE NIFTY 50", f"₹{nifty:,.2f}")
+            
