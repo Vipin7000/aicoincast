@@ -120,4 +120,3 @@ if search_q:
 
 st.divider()
 st.caption("© 2026 AiCoincast | v17.0 Omniscient Edition | Integrated Intelligence Hub")
-    
