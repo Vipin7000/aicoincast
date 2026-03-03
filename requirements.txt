@@ -1,10 +1,5 @@
-streamlit
-yfinance
-google-generativeai
-pandas
-plotly
-requests
-gTTS
-pytz
-scikit-learn
-numpy
+streamlit==1.42.0
+pandas==2.2.2
+requests==2.32.3
+google-generativeai>=0.8.3
+numpy==2.2.2
