@@ -77,15 +77,25 @@ user_query = st.text_input("Kisi bhi coin ke baare mein AI analysis chahiye? (e.
 
 if user_query:
     with st.spinner("AI is thinking..."):
-        try:
-            # Gemini Integration (Ensure your API Key is in Secrets)
-            # genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-            # model = genai.GenerativeModel('gemini-pro')
-            # response = model.generate_content(user_query)
-            # st.write(response.text)
-            st.info("AI analysis feature active. API Key configure karein Streamlit Secrets mein.")
-        except Exception as e:
-            st.error("AI Configuration Error.")
+        # --- Section 2: Market Table ---
+st.subheader("📑 Market Overview")
 
-st.markdown("---")
+if coins_data is not None:
+    # SUCCESSFUL FIX: List ko DataFrame mein convert karein
+    df_coins = pd.DataFrame(coins_data)
+    st.dataframe(df_coins[['name', 'symbol', 'current_price', 'price_change_percentage_24h', 'market_cap']], use_container_width=True)
+else:
+    st.error("API se data nahi mil raha.")
+
+st.divider()
+
+# --- Section 3: AI Search & Report ---
+if "GEMINI_API_KEY" in st.secrets:
+    try:
+        # Correct Configuration
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        model = genai.GenerativeModel('gemini-1.5-flash')
+    except Exception as e:
+        st.error(f"AI Setup Error: {e}")
+        
 st.caption("AiCoincast v17.4 | Powered by Streamlit & CoinGecko")
