@@ -97,4 +97,3 @@ if query:
 
 st.divider()
 st.caption("© 2026 AiCoincast India | v17.8 Sovereign Master | Glitch Fixed")
-    
