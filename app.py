@@ -41,7 +41,7 @@ def ask_ai(query):
     try:
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
         model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(f"Analyze in Hinglish: {query}")
+        response = model.generate_content(f"Analyze in Hinglish for crypto investor: {query}")
         img = f"https://pollinations.ai/p/{query.replace(' ','_')}_cyber?seed={time.time()}"
         return response.text, img
     except Exception as e: return f"Node Error: {str(e)}", None
@@ -60,10 +60,11 @@ def get_market():
 
 # --- 4. MAIN INTERFACE ---
 st.title("🤖 AiCoincast v18.5 Ultra")
+st.caption(f"Last Sync: {datetime.now(IST).strftime('%H:%M:%S')}")
 pulse = get_market()
 
 # Tabs for organization
-tab1, tab2 = st.tabs(["💰 Portfolio & AI", "📈 7-Day Analytics"])
+tab1, tab2, tab3 = st.tabs(["💰 Portfolio & AI", "📈 Analytics", "🔔 Alerts"])
 
 with tab1:
     # Portfolio Manager
@@ -79,38 +80,60 @@ with tab1:
     # Live Display
     st.subheader("Live Status")
     p_cols = st.columns(3)
-    for idx, c in enumerate(pulse["crypto"]):
-        qty = st.session_state.get(f"{c['symbol']}_q", 100.0 if idx > 0 else 176.0)
-        p_cols[idx].metric(c['name'], f"₹{qty * c['current_price']:,.0f}", f"{c['price_change_percentage_24h']:.2f}%")
+    current_values = {}
+    if pulse["crypto"]:
+        for idx, c in enumerate(pulse["crypto"]):
+            qty = st.session_state.get('x_q' if c['symbol']=='xrt' else 'l_q' if c['symbol']=='lai' else 'q_q', 100.0)
+            val = qty * c['current_price']
+            current_values[c['symbol'].upper()] = c['current_price']
+            p_cols[idx].metric(c['name'], f"₹{val:,.0f}", f"{c['price_change_percentage_24h']:.2f}%")
 
-    # Intelligence Search
+    # AI Intelligence Search
     st.divider()
-    query = st.text_input("🔍 AI Intelligence Search:", "XRT News India")
+    query = st.text_input("🔍 AI Intelligence Search:", "XRT and LayerAI Price Outlook India")
     if query:
         with st.spinner("Decoding..."):
             rep, vis = ask_ai(query)
             st.markdown("<div class='master-card'>", unsafe_allow_html=True)
-            if vis: st.image(vis, width=300)
-            st.info(rep)
+            col1, col2 = st.columns([1, 2])
+            if vis: col1.image(vis, use_container_width=True)
+            col2.info(rep)
             st.markdown("</div>", unsafe_allow_html=True)
 
 with tab2:
     st.subheader("📊 7-Day Performance Outlook")
-    # Generating dummy historical data for visualization
     dates = [(datetime.now() - timedelta(days=i)).strftime("%d %b") for i in range(7, 0, -1)]
-    # Simulated trend based on current portfolio value
-    base_val = sum([st.session_state.get('x_q', 176.0) * 15.0]) # Example base
+    # Simulated Portfolio Tracking
     trend_data = pd.DataFrame({
         'Day': dates,
-        'Portfolio Value (₹)': [base_val * (1 + np.random.uniform(-0.05, 0.05)) for _ in range(7)]
+        'Value (₹)': [sum(current_values.values()) * (1 + np.random.uniform(-0.03, 0.03)) for _ in range(7)]
     })
     st.line_chart(trend_data.set_index('Day'))
-    st.caption("Note: Chart shows simulated trend based on your current holdings.")
+    
+
+with tab3:
+    st.subheader("🔔 Price Alert Terminal")
+    al_col1, al_col2 = st.columns(2)
+    alert_token = al_col1.selectbox("Select Token", ["XRT", "LAI", "QRL"])
+    alert_price = al_col2.number_input(f"Target {alert_token} Price (₹)", value=0.0)
+    
+    if st.button("Set Alert"):
+        st.session_state.alert_set = {"token": alert_token, "price": alert_price}
+        st.success(f"Alert set for {alert_token} at ₹{alert_price}")
+
+    # Alert Check Logic
+    if "alert_set" in st.session_state:
+        target = st.session_state.alert_set
+        current = current_values.get(target['token'], 0)
+        if current >= target['price'] and target['price'] > 0:
+            st.warning(f"🚀 ALERT: {target['token']} has reached ₹{current}!")
 
 # --- SIDEBAR ---
 with st.sidebar:
+    st.title("🛰️ Sentinel")
     st.metric("NIFTY 50", pulse["nifty"])
+    st.divider()
     if st.button("🔒 Logout"):
         del st.session_state.auth
         st.rerun()
-        
+    
