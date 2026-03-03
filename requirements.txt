@@ -1,6 +1,6 @@
-streamlit
-yfinance
-google-generativeai
-requests
+streamlit>=1.31.0
+yfinance>=1.2.0
+google-generativeai>=0.8.6
+requests>=2.31.0
 pytz
-pandas
+pandas>=2.1.0
