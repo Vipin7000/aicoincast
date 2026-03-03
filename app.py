@@ -104,4 +104,4 @@ if query:
         c2.info(rep)
         st.markdown(f'<a href="https://wa.me/?text={rep[:200]}" style="background:#25D366;color:white;padding:10px;border-radius:10px;text-decoration:none;display:block;text-align:center;">📲 WhatsApp Share</a>', unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
-    
+        
