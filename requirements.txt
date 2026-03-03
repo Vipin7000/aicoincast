@@ -3,4 +3,3 @@ yfinance
 google-generativeai
 requests
 pytz
-pandas
