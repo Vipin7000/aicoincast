@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
-import google.generativeai as genai
+# PURANA: import google.generativeai as genai (DEPRECATED)
+from google import genai  # NAYA SDK USE KAREIN
 import requests
 import time
 import pandas as pd
@@ -8,8 +9,8 @@ import numpy as np
 from datetime import datetime, timedelta
 import pytz
 
-# --- 1. SETUP & THEME (Blur & UI Fixed) ---
-st.set_page_config(page_title="AiCoincast v18.6 Pro", layout="wide")
+# --- 1. SETUP & THEME ---
+st.set_page_config(page_title="AiCoincast v18.7 Sovereign", layout="wide")
 IST = pytz.timezone('Asia/Kolkata')
 MASTER_PWD = "SAMASTIPUR@2026"
 
@@ -37,23 +38,27 @@ if "auth" not in st.session_state:
         else: st.error("Wrong Key!")
     st.stop()
 
-# --- 3. THE ULTIMATE AI ENGINE (404 Error Fixed) ---
+# --- 3. THE NEW AI ENGINE (404 Issue Fixed) ---
 def ask_ai(query):
     try:
         if "GEMINI_API_KEY" not in st.secrets: 
             return "Error: API Key missing in Secrets!", None
         
-        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-        # Fix: Model path defined clearly to avoid 404
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Naya Client Initialization
+        client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
         
-        response = model.generate_content(f"Analyze in Hinglish for crypto investor: {query}")
+        # Latest Model ka istemal (gemini-2.0-flash)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash", 
+            contents=f"Analyze in Hinglish for crypto investor: {query}"
+        )
         
         if response and response.text:
             img_url = f"https://pollinations.ai/p/{query.replace(' ','_')}_purple_cyber?seed={time.time()}"
             return response.text, img_url
         return "AI Node Busy. Try later.", None
     except Exception as e:
+        # Ab ye real error dikhayega (जैसे की Key invalid है या Quota खत्म)
         return f"Node Error: {str(e)}", None
 
 @st.cache_data(ttl=60)
@@ -69,24 +74,23 @@ def get_market():
     return data
 
 # --- 4. MAIN INTERFACE ---
-st.title("🤖 AiCoincast v18.6 Pro")
+st.title("🤖 AiCoincast v18.7 Sovereign")
 st.caption(f"Last Updated: {datetime.now(IST).strftime('%H:%M:%S')}")
 pulse = get_market()
 
-# HEALTH CHECK SECTION
+# SIDEBAR & HEALTH CHECK
 with st.sidebar:
     st.title("🛰️ Sentinel")
     st.metric("NIFTY 50", pulse["nifty"])
     st.divider()
     
-    # New Health Check Feature
     if st.button("🔍 AI Health Check"):
-        with st.spinner("Pinging AI Node..."):
+        with st.spinner("Pinging New AI Node..."):
             test_res, _ = ask_ai("Hi")
             if "Node Error" in test_res or "Error" in test_res:
-                st.error("AI Node: Offline (Check API Key)")
+                st.error("AI Node: Error (Check Requirements/Key)")
             else:
-                st.success("AI Node: Online ✅")
+                st.success("AI Node: Online (v2.0 Flash) ✅")
     
     if st.button("🔒 Logout"):
         del st.session_state.auth
@@ -119,7 +123,7 @@ with tab1:
     st.divider()
     query = st.text_input("🔍 Intelligence Search:", "XRT News India Today")
     if query:
-        with st.spinner("AI is thinking..."):
+        with st.spinner("AI v2.0 is thinking..."):
             rep, vis = ask_ai(query)
             st.markdown("<div class='master-card'>", unsafe_allow_html=True)
             col_x, col_y = st.columns([1, 2.2])
@@ -131,7 +135,6 @@ with tab1:
 with tab2:
     st.subheader("📊 Performance Analytics")
     dates = [(datetime.now() - timedelta(days=i)).strftime("%d %b") for i in range(7, 0, -1)]
-    # Simulated Trend based on portfolio
     trend_vals = [sum(curr_prices.values() if curr_prices else [1000]) * (1 + np.random.uniform(-0.04, 0.04)) for _ in range(7)]
     df = pd.DataFrame({'Day': dates, 'Value (₹)': trend_vals})
     st.line_chart(df.set_index('Day'))
