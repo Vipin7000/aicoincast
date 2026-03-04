@@ -136,3 +136,4 @@ with st.sidebar:
     if st.button("🔒 Logout"):
         del st.session_state.auth
         st.rerun()
+        
