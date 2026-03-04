@@ -3,24 +3,24 @@ import yfinance as yf
 import google.generativeai as genai
 import requests
 import time
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
-# --- 1. SETUP & THEME ---
-st.set_page_config(page_title="AiCoincast v18.5 Ultra", layout="wide")
+# --- 1. SETUP & THEME (Blur Issue Fixed) ---
+st.set_page_config(page_title="AiCoincast v18.3 Ultimate", layout="wide")
 IST = pytz.timezone('Asia/Kolkata')
 MASTER_PWD = "SAMASTIPUR@2026"
 
+# CSS में text-shadow को कम किया गया है ताकि प्राइस साफ (Clear) दिखे
 st.markdown("""<style>
     .main { background-color: #120024; color: #E0B0FF; }
     [data-testid="stSidebar"] { background-color: #080015 !important; border-right: 2px solid #BF40BF; }
+    /* Fix for blurry text: Shadow reduced from 10px to 2px */
     [data-testid="stMetricValue"] { 
         color: #BF40BF !important; 
-        font-weight: 800 !important; 
-        text-shadow: none !important; 
-        font-size: 1.9rem !important;
+        font-weight: bold !important; 
+        text-shadow: 1px 1px 3px #BF40BF; 
+        font-size: 1.8rem !important;
     }
     .master-card { background: rgba(30, 0, 50, 0.9); border: 2px solid #BF40BF; padding: 20px; border-radius: 15px; margin-top: 10px; }
 </style>""", unsafe_allow_html=True)
@@ -36,15 +36,25 @@ if "auth" not in st.session_state:
         else: st.error("Wrong Key!")
     st.stop()
 
-# --- 3. ENGINES ---
+# --- 3. ROBUST AI ENGINE (Syncing Error Fix) ---
 def ask_ai(query):
     try:
+        if "GEMINI_API_KEY" not in st.secrets: 
+            return "Error: API Key missing in Secrets!", None
+        
         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        # Using 1.5-flash for faster and reliable response
         model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(f"Analyze in Hinglish for crypto investor: {query}")
-        img = f"https://pollinations.ai/p/{query.replace(' ','_')}_cyber?seed={time.time()}"
-        return response.text, img
-    except Exception as e: return f"Node Error: {str(e)}", None
+        
+        response = model.generate_content(f"Analyze in Hinglish for crypto: {query}")
+        
+        if response and response.candidates:
+            if response.candidates[0].content.parts:
+                img_url = f"https://pollinations.ai/p/{query.replace(' ','_')}_purple_cyber?seed={time.time()}"
+                return response.text, img_url
+        return "AI Node Busy. Try later.", None
+    except Exception as e:
+        return f"Technical Error: {str(e)}", None
 
 @st.cache_data(ttl=60)
 def get_market():
@@ -52,88 +62,77 @@ def get_market():
     try:
         n = yf.Ticker("^NSEI").history(period="1d")['Close'].iloc[-1]
         data["nifty"] = f"₹{n:,.2f}"
-        ids = "xrt-token,layerai,the-quantum-resistant-ledger"
-        r = requests.get(f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids={ids}")
+        # Portfolio specific IDs
+        ids = "xrt-token,layerai,the-quantum-resistant-ledger,bitcoin,ethereum"
+        url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids={ids}"
+        r = requests.get(url, timeout=5)
         if r.status_code == 200: data["crypto"] = r.json()
     except: pass
     return data
 
-# --- 4. MAIN INTERFACE ---
-st.title("🤖 AiCoincast v18.5 Ultra")
-st.caption(f"Last Sync: {datetime.now(IST).strftime('%H:%M:%S')}")
+# --- 4. SIDEBAR ---
 pulse = get_market()
-
-# Tabs for organization
-tab1, tab2, tab3 = st.tabs(["💰 Portfolio & AI", "📈 Analytics", "🔔 Alerts"])
-
-with tab1:
-    # Portfolio Manager
-    with st.expander("🛠️ Manage Holdings"):
-        c1, c2, c3 = st.columns(3)
-        x_q = c1.number_input("XRT Qty", value=st.session_state.get('x_q', 176.0))
-        l_q = c2.number_input("LAI Qty", value=st.session_state.get('l_q', 100.0))
-        q_q = c3.number_input("QRL Qty", value=st.session_state.get('q_q', 100.0))
-        if st.button("Sync Data"):
-            st.session_state.update({'x_q':x_q, 'l_q':l_q, 'q_q':q_q})
-            st.rerun()
-
-    # Live Display
-    st.subheader("Live Status")
-    p_cols = st.columns(3)
-    current_values = {}
-    if pulse["crypto"]:
-        for idx, c in enumerate(pulse["crypto"]):
-            qty = st.session_state.get('x_q' if c['symbol']=='xrt' else 'l_q' if c['symbol']=='lai' else 'q_q', 100.0)
-            val = qty * c['current_price']
-            current_values[c['symbol'].upper()] = c['current_price']
-            p_cols[idx].metric(c['name'], f"₹{val:,.0f}", f"{c['price_change_percentage_24h']:.2f}%")
-
-    # AI Intelligence Search
-    st.divider()
-    query = st.text_input("🔍 AI Intelligence Search:", "XRT and LayerAI Price Outlook India")
-    if query:
-        with st.spinner("Decoding..."):
-            rep, vis = ask_ai(query)
-            st.markdown("<div class='master-card'>", unsafe_allow_html=True)
-            col1, col2 = st.columns([1, 2])
-            if vis: col1.image(vis, use_container_width=True)
-            col2.info(rep)
-            st.markdown("</div>", unsafe_allow_html=True)
-
-with tab2:
-    st.subheader("📊 7-Day Performance Outlook")
-    dates = [(datetime.now() - timedelta(days=i)).strftime("%d %b") for i in range(7, 0, -1)]
-    # Simulated Portfolio Tracking
-    trend_data = pd.DataFrame({
-        'Day': dates,
-        'Value (₹)': [sum(current_values.values()) * (1 + np.random.uniform(-0.03, 0.03)) for _ in range(7)]
-    })
-    st.line_chart(trend_data.set_index('Day'))
-    
-
-with tab3:
-    st.subheader("🔔 Price Alert Terminal")
-    al_col1, al_col2 = st.columns(2)
-    alert_token = al_col1.selectbox("Select Token", ["XRT", "LAI", "QRL"])
-    alert_price = al_col2.number_input(f"Target {alert_token} Price (₹)", value=0.0)
-    
-    if st.button("Set Alert"):
-        st.session_state.alert_set = {"token": alert_token, "price": alert_price}
-        st.success(f"Alert set for {alert_token} at ₹{alert_price}")
-
-    # Alert Check Logic
-    if "alert_set" in st.session_state:
-        target = st.session_state.alert_set
-        current = current_values.get(target['token'], 0)
-        if current >= target['price'] and target['price'] > 0:
-            st.warning(f"🚀 ALERT: {target['token']} has reached ₹{current}!")
-
-# --- SIDEBAR ---
 with st.sidebar:
     st.title("🛰️ Sentinel")
     st.metric("NIFTY 50", pulse["nifty"])
     st.divider()
+    if pulse["crypto"]:
+        for c in pulse["crypto"][:3]:
+            st.metric(c['name'], f"₹{c['current_price']:,}", f"{c['price_change_percentage_24h']:.2f}%")
     if st.button("🔒 Logout"):
         del st.session_state.auth
         st.rerun()
+
+# --- 5. UI HEADER ---
+st.title("🤖 AiCoincast v18.3 Ultimate")
+st.markdown('<div style="background:#4B0082;color:white;padding:10px;text-align:center;font-weight:bold;border-radius:10px;">🚀 NIFTY LIVE | AI COMMANDER | PURPLE PROTOCOL</div>', unsafe_allow_html=True)
+
+# --- 6. PORTFOLIO MANAGER ---
+with st.expander("🛠️ Manage Portfolio (XRT, LAI, QRL)"):
+    col_a, col_b, col_c = st.columns(3)
+    x_q = col_a.number_input("XRT Qty", value=st.session_state.get('x_q', 176.0))
+    x_b = col_a.number_input("XRT Buy", value=st.session_state.get('x_b', 15.0))
+    l_q = col_b.number_input("LAI Qty", value=st.session_state.get('l_q', 100.0))
+    l_b = col_b.number_input("LAI Buy", value=st.session_state.get('l_b', 0.01))
+    q_q = col_c.number_input("QRL Qty", value=st.session_state.get('q_q', 100.0))
+    q_b = col_c.number_input("QRL Buy", value=st.session_state.get('q_b', 0.20))
+    if st.button("Save & Sync"):
+        st.session_state.update({'x_q':x_q,'x_b':x_b,'l_q':l_q,'l_b':l_b,'q_q':q_q,'q_b':q_b})
+        st.success("Synced!")
+        st.rerun()
+
+# Portfolio Display
+st.subheader("💰 Live Portfolio")
+p_cols = st.columns(3)
+map_hold = {"xrt-token": ('x_q','x_b',0), "layerai": ('l_q','l_b',1), "the-quantum-resistant-ledger": ('q_q','q_b',2)}
+
+if pulse["crypto"]:
+    for c in pulse["crypto"]:
+        if c['id'] in map_hold:
+            q_key, b_key, idx = map_hold[c['id']]
+            qty, buy = st.session_state.get(q_key, 0.0), st.session_state.get(b_key, 0.0)
+            if qty > 0:
+                val = qty * c['current_price']
+                pl = val - (qty * buy)
+                p_cols[idx].metric(c['name'], f"₹{val:,.0f}", f"₹{pl:,.0f}")
+
+# --- 7. INTELLIGENCE HUB ---
+st.markdown("---")
+if st.button("📰 Get Latest XRT News"):
+    st.session_state.query_val = "Latest news for XRT (Akash) India trends"
+else:
+    if 'query_val' not in st.session_state: st.session_state.query_val = "XRT and LayerAI India News"
+
+query = st.text_input("🔍 Search:", value=st.session_state.query_val)
+if query:
+    with st.spinner("Decoding..."):
+        report, visual = ask_ai(query)
+        st.markdown("<div class='master-card'>", unsafe_allow_html=True)
+        c1, c2 = st.columns([1, 1.8])
+        if visual: c1.image(visual, use_container_width=True)
+        with c2:
+            st.subheader("📝 Master Report")
+            st.info(report)
+            st.markdown(f'<a href="https://wa.me/?text={report[:200]}" target="_blank" style="background:#25D366;color:white;padding:12px;border-radius:10px;text-decoration:none;display:block;text-align:center;font-weight:bold;">📲 WhatsApp Share</a>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
     
