@@ -164,4 +164,4 @@ with tab3:
         cur = curr_prices.get(al['tkn'], 0)
         if cur >= al['prc'] and al['prc'] > 0:
             st.error(f"🚨 ALERT: {al['tkn']} reached ₹{cur}!")
-    
+                
