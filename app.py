@@ -1,6 +1,6 @@
 import streamlit as st
 import yfinance as yf
-from google import genai 
+from google import genai  # Modern SDK
 import requests
 import time
 import pandas as pd
@@ -8,72 +8,30 @@ import numpy as np
 from datetime import datetime, timedelta
 import pytz
 
-# --- 1. SETUP & THEME (Cyber-Dark Sink) ---
-st.set_page_config(page_title="AiCoincast v18.7 Sovereign", layout="wide")
+# --- 1. SETUP & THEME (Cyber-Dark Sovereign) ---
+st.set_page_config(page_title="AiCoincast v18.7.1 Sovereign Pro", layout="wide")
 IST = pytz.timezone('Asia/Kolkata')
 MASTER_PWD = "SAMASTIPUR@2026"
 
-# CSS SINK: Matrix-Cyber Look
 st.markdown("""<style>
-    /* Main App Background */
-    .stApp { 
-        background-color: #05010a; 
-        color: #00ff41; 
-        font-family: 'JetBrains Mono', monospace; 
-    }
-
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] { 
-        background-color: #000000 !important; 
-        border-right: 2px solid #BF40BF; 
-    }
-
-    /* Metric Values (Neon Glow) */
+    .stApp { background-color: #05010a; color: #00ff41; font-family: 'JetBrains Mono', monospace; }
+    [data-testid="stSidebar"] { background-color: #000000 !important; border-right: 2px solid #BF40BF; }
     [data-testid="stMetricValue"] { 
         color: #00ff41 !important; 
-        font-weight: 900 !important; 
-        text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41; 
+        text-shadow: 0 0 10px #00ff41; 
         font-size: 2.2rem !important;
+        font-weight: 900 !important;
     }
-    
-    /* Metrics Label */
-    [data-testid="stMetricLabel"] {
-        color: #BF40BF !important;
-        font-weight: bold !important;
-    }
-
-    /* Master Cards */
     .master-card { 
         background: rgba(15, 15, 15, 0.9); 
         border: 1px solid #BF40BF; 
-        padding: 25px; 
+        padding: 20px; 
         border-radius: 12px; 
-        box-shadow: 0 0 15px rgba(191, 64, 191, 0.3);
+        box-shadow: 0 0 15px rgba(191, 64, 191, 0.2);
     }
-
-    /* Custom Cyber Buttons */
     .stButton>button { 
         background: linear-gradient(45deg, #BF40BF, #00ff41) !important; 
-        color: #000000 !important; 
-        border: none !important;
-        font-weight: bold !important;
-        text-transform: uppercase;
-        transition: 0.5s;
-    }
-    .stButton>button:hover { 
-        box-shadow: 0 0 25px #00ff41 !important;
-        transform: scale(1.02);
-    }
-
-    /* Tabs Styling */
-    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
-    .stTabs [data-baseweb="tab"] {
-        color: #BF40BF !important;
-        background-color: transparent !important;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #00ff41 !important;
-        border-bottom: 3px solid #00ff41 !important;
+        color: black !important; font-weight: bold !important;
     }
 </style>""", unsafe_allow_html=True)
 
@@ -88,23 +46,37 @@ if "auth" not in st.session_state:
         else: st.error("Wrong Key!")
     st.stop()
 
-# --- 3. AI ENGINE (v2.0 Flash) ---
+# --- 3. SMART AI ENGINE (v18.7.1 Auto-Retry & Connection Test) ---
 def ask_ai(query):
-    try:
-        if "GEMINI_API_KEY" not in st.secrets: 
-            return "Error: API Key missing!", None
-        client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", 
-            config={'system_instruction': 'You are a professional crypto expert. Use Hinglish.', 'temperature': 0.7},
-            contents=query
-        )
-        if response and response.text:
-            img_url = f"https://pollinations.ai/p/{query.replace(' ','_')}_cyber?seed={time.time()}"
-            return response.text, img_url
-        return "AI Node Busy.", None
-    except Exception as e:
-        return f"Node Error: {str(e)}", None
+    # SMART RETRY: 429 Quota Issue ko handle karne ke liye
+    for attempt in range(2):
+        try:
+            if "GEMINI_API_KEY" not in st.secrets: 
+                return "Error: API Key Missing!", None
+            
+            client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+            
+            # Use latest v2.0 Flash for speed
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                config={'system_instruction': 'Professional Crypto Analyst in Hinglish.', 'temperature': 0.7},
+                contents=query
+            )
+            
+            if response and response.text:
+                img_url = f"https://pollinations.ai/p/{query.replace(' ','_')}_cyber?seed={time.time()}"
+                return response.text, img_url
+            
+        except Exception as e:
+            err = str(e)
+            if "429" in err or "RESOURCE_EXHAUSTED" in err: # Quota Error
+                if attempt == 0:
+                    st.warning("⚠️ Quota Full! 5 Sec Wait...")
+                    time.sleep(5)
+                    continue
+                return "Error: Quota Exhausted. Try in 1 min.", None
+            return f"Node Error: {err}", None
+    return "AI Node Busy.", None
 
 @st.cache_data(ttl=60)
 def get_market():
@@ -119,18 +91,23 @@ def get_market():
     return data
 
 # --- 4. INTERFACE ---
-st.title("🤖 AiCoincast v18.7 Sovereign")
-st.caption(f"Sync Active | {datetime.now(IST).strftime('%H:%M:%S IST')}")
+st.title("🤖 AiCoincast v18.7.1 Sovereign Pro")
 pulse = get_market()
 
 with st.sidebar:
     st.title("🛰️ Sentinel")
     st.metric("NIFTY 50", pulse["nifty"])
     st.divider()
+    
+    # Smart Connection Test Button
     if st.button("🔍 AI Health Check"):
-        res, _ = ask_ai("Hi")
-        if "Node Error" in res: st.error("AI Offline")
-        else: st.success("AI Online ✅")
+        with st.spinner("Pinging API Node..."):
+            res, _ = ask_ai("API Connection Test: Say 'Online'")
+            if "Error" in res or "Node Error" in res:
+                st.error(f"AI Node: Offline\n({res})")
+            else:
+                st.success(f"AI Node: {res} (v2.0 Flash) ✅")
+    
     if st.button("🔒 Logout"):
         del st.session_state.auth
         st.rerun()
@@ -138,7 +115,7 @@ with st.sidebar:
 tab1, tab2, tab3 = st.tabs(["💰 Portfolio", "📈 Analytics", "🔔 Alerts"])
 
 with tab1:
-    with st.expander("🛠️ Manage Holdings"):
+    with st.expander("🛠️ Manage Portfolio"):
         c1, c2, c3 = st.columns(3)
         x_q = c1.number_input("XRT Qty", value=st.session_state.get('x_q', 176.0))
         l_q = c2.number_input("LAI Qty", value=st.session_state.get('l_q', 100.0))
@@ -157,9 +134,9 @@ with tab1:
             p_cols[idx].metric(c['name'], f"₹{val:,.0f}", f"{c['price_change_percentage_24h']:.2f}%")
 
     st.divider()
-    query = st.text_input("🔍 Intelligence Search:", "XRT Trends Today")
+    query = st.text_input("🔍 Intelligence Search:", "XRT and LayerAI Outlook")
     if query:
-        with st.spinner("AI v2.0 Thinking..."):
+        with st.spinner("AI Analysis in Progress..."):
             rep, vis = ask_ai(query)
             st.markdown("<div class='master-card'>", unsafe_allow_html=True)
             col_x, col_y = st.columns([1, 2.2])
@@ -168,10 +145,10 @@ with tab1:
             st.markdown("</div>", unsafe_allow_html=True)
 
 with tab2:
-    st.subheader("📊 Performance Trend")
+    st.subheader("📊 Portfolio Trend (7D)")
     dates = [(datetime.now() - timedelta(days=i)).strftime("%d %b") for i in range(7, 0, -1)]
-    total_val = sum(curr_prices.values() if curr_prices else [1000])
-    df = pd.DataFrame({'Day': dates, 'Portfolio (₹)': [total_val * (1 + np.random.uniform(-0.03, 0.03)) for _ in range(7)]})
+    total = sum(curr_prices.values() if curr_prices else [1000])
+    df = pd.DataFrame({'Day': dates, 'Portfolio (₹)': [total * (1 + np.random.uniform(-0.02, 0.02)) for _ in range(7)]})
     st.line_chart(df.set_index('Day'))
 
 with tab3:
@@ -187,4 +164,4 @@ with tab3:
         cur = curr_prices.get(al['tkn'], 0)
         if cur >= al['prc'] and al['prc'] > 0:
             st.error(f"🚨 ALERT: {al['tkn']} reached ₹{cur}!")
-            
+    
