@@ -1,7 +1,6 @@
 import streamlit as st
 import yfinance as yf
-# PURANA: import google.generativeai as genai (DEPRECATED)
-from google import genai  # NAYA SDK USE KAREIN
+from google import genai 
 import requests
 import time
 import pandas as pd
@@ -9,22 +8,73 @@ import numpy as np
 from datetime import datetime, timedelta
 import pytz
 
-# --- 1. SETUP & THEME ---
+# --- 1. SETUP & THEME (Cyber-Dark Sink) ---
 st.set_page_config(page_title="AiCoincast v18.7 Sovereign", layout="wide")
 IST = pytz.timezone('Asia/Kolkata')
 MASTER_PWD = "SAMASTIPUR@2026"
 
+# CSS SINK: Matrix-Cyber Look
 st.markdown("""<style>
-    .main { background-color: #120024; color: #E0B0FF; }
-    [data-testid="stSidebar"] { background-color: #080015 !important; border-right: 2px solid #BF40BF; }
-    [data-testid="stMetricValue"] { 
-        color: #BF40BF !important; 
-        font-weight: 800 !important; 
-        text-shadow: none !important; 
-        font-size: 1.8rem !important;
+    /* Main App Background */
+    .stApp { 
+        background-color: #05010a; 
+        color: #00ff41; 
+        font-family: 'JetBrains Mono', monospace; 
     }
-    .master-card { background: rgba(30, 0, 50, 0.9); border: 2px solid #BF40BF; padding: 20px; border-radius: 15px; margin-top: 10px; }
-    .stButton>button { width: 100%; border-radius: 10px; font-weight: bold; }
+
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] { 
+        background-color: #000000 !important; 
+        border-right: 2px solid #BF40BF; 
+    }
+
+    /* Metric Values (Neon Glow) */
+    [data-testid="stMetricValue"] { 
+        color: #00ff41 !important; 
+        font-weight: 900 !important; 
+        text-shadow: 0 0 10px #00ff41, 0 0 20px #00ff41; 
+        font-size: 2.2rem !important;
+    }
+    
+    /* Metrics Label */
+    [data-testid="stMetricLabel"] {
+        color: #BF40BF !important;
+        font-weight: bold !important;
+    }
+
+    /* Master Cards */
+    .master-card { 
+        background: rgba(15, 15, 15, 0.9); 
+        border: 1px solid #BF40BF; 
+        padding: 25px; 
+        border-radius: 12px; 
+        box-shadow: 0 0 15px rgba(191, 64, 191, 0.3);
+    }
+
+    /* Custom Cyber Buttons */
+    .stButton>button { 
+        background: linear-gradient(45deg, #BF40BF, #00ff41) !important; 
+        color: #000000 !important; 
+        border: none !important;
+        font-weight: bold !important;
+        text-transform: uppercase;
+        transition: 0.5s;
+    }
+    .stButton>button:hover { 
+        box-shadow: 0 0 25px #00ff41 !important;
+        transform: scale(1.02);
+    }
+
+    /* Tabs Styling */
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .stTabs [data-baseweb="tab"] {
+        color: #BF40BF !important;
+        background-color: transparent !important;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #00ff41 !important;
+        border-bottom: 3px solid #00ff41 !important;
+    }
 </style>""", unsafe_allow_html=True)
 
 # --- 2. SECURITY ---
@@ -38,27 +88,22 @@ if "auth" not in st.session_state:
         else: st.error("Wrong Key!")
     st.stop()
 
-# --- 3. THE NEW AI ENGINE (404 Issue Fixed) ---
+# --- 3. AI ENGINE (v2.0 Flash) ---
 def ask_ai(query):
     try:
         if "GEMINI_API_KEY" not in st.secrets: 
-            return "Error: API Key missing in Secrets!", None
-        
-        # Naya Client Initialization
+            return "Error: API Key missing!", None
         client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-        
-        # Latest Model ka istemal (gemini-2.0-flash)
         response = client.models.generate_content(
             model="gemini-2.0-flash", 
-            contents=f"Analyze in Hinglish for crypto investor: {query}"
+            config={'system_instruction': 'You are a professional crypto expert. Use Hinglish.', 'temperature': 0.7},
+            contents=query
         )
-        
         if response and response.text:
-            img_url = f"https://pollinations.ai/p/{query.replace(' ','_')}_purple_cyber?seed={time.time()}"
+            img_url = f"https://pollinations.ai/p/{query.replace(' ','_')}_cyber?seed={time.time()}"
             return response.text, img_url
-        return "AI Node Busy. Try later.", None
+        return "AI Node Busy.", None
     except Exception as e:
-        # Ab ye real error dikhayega (जैसे की Key invalid है या Quota खत्म)
         return f"Node Error: {str(e)}", None
 
 @st.cache_data(ttl=60)
@@ -73,31 +118,24 @@ def get_market():
     except: pass
     return data
 
-# --- 4. MAIN INTERFACE ---
+# --- 4. INTERFACE ---
 st.title("🤖 AiCoincast v18.7 Sovereign")
-st.caption(f"Last Updated: {datetime.now(IST).strftime('%H:%M:%S')}")
+st.caption(f"Sync Active | {datetime.now(IST).strftime('%H:%M:%S IST')}")
 pulse = get_market()
 
-# SIDEBAR & HEALTH CHECK
 with st.sidebar:
     st.title("🛰️ Sentinel")
     st.metric("NIFTY 50", pulse["nifty"])
     st.divider()
-    
     if st.button("🔍 AI Health Check"):
-        with st.spinner("Pinging New AI Node..."):
-            test_res, _ = ask_ai("Hi")
-            if "Node Error" in test_res or "Error" in test_res:
-                st.error("AI Node: Error (Check Requirements/Key)")
-            else:
-                st.success("AI Node: Online (v2.0 Flash) ✅")
-    
+        res, _ = ask_ai("Hi")
+        if "Node Error" in res: st.error("AI Offline")
+        else: st.success("AI Online ✅")
     if st.button("🔒 Logout"):
         del st.session_state.auth
         st.rerun()
 
-# Tabs
-tab1, tab2, tab3 = st.tabs(["💰 Portfolio & AI", "📈 Analytics", "🔔 Alerts"])
+tab1, tab2, tab3 = st.tabs(["💰 Portfolio", "📈 Analytics", "🔔 Alerts"])
 
 with tab1:
     with st.expander("🛠️ Manage Holdings"):
@@ -105,12 +143,10 @@ with tab1:
         x_q = c1.number_input("XRT Qty", value=st.session_state.get('x_q', 176.0))
         l_q = c2.number_input("LAI Qty", value=st.session_state.get('l_q', 100.0))
         q_q = c3.number_input("QRL Qty", value=st.session_state.get('q_q', 100.0))
-        if st.button("Sync Portfolio"):
+        if st.button("Update Sync"):
             st.session_state.update({'x_q':x_q, 'l_q':l_q, 'q_q':q_q})
-            st.success("Synced!")
             st.rerun()
 
-    st.subheader("Live Market Status")
     p_cols = st.columns(3)
     curr_prices = {}
     if pulse["crypto"]:
@@ -121,35 +157,34 @@ with tab1:
             p_cols[idx].metric(c['name'], f"₹{val:,.0f}", f"{c['price_change_percentage_24h']:.2f}%")
 
     st.divider()
-    query = st.text_input("🔍 Intelligence Search:", "XRT News India Today")
+    query = st.text_input("🔍 Intelligence Search:", "XRT Trends Today")
     if query:
-        with st.spinner("AI v2.0 is thinking..."):
+        with st.spinner("AI v2.0 Thinking..."):
             rep, vis = ask_ai(query)
             st.markdown("<div class='master-card'>", unsafe_allow_html=True)
             col_x, col_y = st.columns([1, 2.2])
             if vis: col_x.image(vis, use_container_width=True)
-            col_y.subheader("Master Analysis")
             col_y.info(rep)
             st.markdown("</div>", unsafe_allow_html=True)
 
 with tab2:
-    st.subheader("📊 Performance Analytics")
+    st.subheader("📊 Performance Trend")
     dates = [(datetime.now() - timedelta(days=i)).strftime("%d %b") for i in range(7, 0, -1)]
-    trend_vals = [sum(curr_prices.values() if curr_prices else [1000]) * (1 + np.random.uniform(-0.04, 0.04)) for _ in range(7)]
-    df = pd.DataFrame({'Day': dates, 'Value (₹)': trend_vals})
+    total_val = sum(curr_prices.values() if curr_prices else [1000])
+    df = pd.DataFrame({'Day': dates, 'Portfolio (₹)': [total_val * (1 + np.random.uniform(-0.03, 0.03)) for _ in range(7)]})
     st.line_chart(df.set_index('Day'))
 
 with tab3:
-    st.subheader("🔔 Risk Alerts")
-    a_col1, a_col2 = st.columns(2)
-    tkn = a_col1.selectbox("Token", ["XRT", "LAI", "QRL"])
-    trgt = a_col2.number_input(f"Alert Price for {tkn}", value=0.0)
-    if st.button("Set Price Alarm"):
+    st.subheader("🔔 Price Alarms")
+    tkn = st.selectbox("Select Token", ["XRT", "LAI", "QRL"])
+    trgt = st.number_input(f"Target {tkn} Price (₹)", value=0.0)
+    if st.button("Set Alarm"):
         st.session_state.alert = {"tkn": tkn, "prc": trgt}
-        st.success(f"Alarm set for {tkn} at ₹{trgt}")
+        st.success(f"Alarm synced for {tkn}")
 
     if "alert" in st.session_state:
         al = st.session_state.alert
         cur = curr_prices.get(al['tkn'], 0)
         if cur >= al['prc'] and al['prc'] > 0:
-            st.error(f"🚨 TARGET REACHED: {al['tkn']} is at ₹{cur}!")
+            st.error(f"🚨 ALERT: {al['tkn']} reached ₹{cur}!")
+            
