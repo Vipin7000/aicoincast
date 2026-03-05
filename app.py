@@ -1,75 +1,65 @@
 import streamlit as st
-import pandas as pd
 import google.generativeai as genai
+import time
 from datetime import datetime
 
-# --- v19.8 CORE ENGINE CONFIG ---
-st.set_page_config(page_title="AiCoincast Terminal v19.8", layout="wide", page_icon="🛰️")
+# --- API Config ---
+genai.configure(api_key="YOUR_API_KEY")
+model = genai.GenerativeModel('gemini-1.5-flash')
 
-# --- SOVEREIGN DATA MEMORY (v19.7 RESTORED) ---
-SOVEREIGN_CONTEXT = {
-    "user_role": "Master / Reliance Digital Veteran",
-    "location": "Samastipur, Bihar",
-    "zodiac_preference": "Libra (Spiritually Aligned)",
-    "holdings": ["XRT (Robonomics)", "LAI (LayerAI)", "QRL (Quantum Resistant)"],
-    "active_projects": ["Home Plumbing (Kitchen/Bath)", "MBA Distance Learning"],
-    "master_key": "SAMASTIPUR@2026"
-}
+# --- 30 Coins Full List ---
+# Aapke invested coins (XRT, LAI, QRL) top par hain
+coins_30 = [
+    "XRT", "LAI", "QRL", "BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE",
+    "AVAX", "DOT", "TRX", "LINK", "MATIC", "SHIB", "LTC", "BCH", "UNI", "NEAR",
+    "ARB", "APT", "OP", "STX", "FIL", "GRT", "RNDR", "INJ", "PEPE", "BONK"
+]
 
-# --- AI NODE INITIALIZATION (v19.8 FIX) ---
-def init_sovereign_ai(api_key):
-    try:
-        genai.configure(api_key=api_key)
-        # Fix for NotFound: Fallback to latest available models in 2026
-        model_name = 'gemini-2.0-flash' # Updated for v19.8 stability
-        return genai.GenerativeModel(model_name)
-    except Exception as e:
-        st.error(f"Sovereign Node Offline: {str(e)}")
-        return None
+# --- UI Setup ---
+st.set_page_config(page_title="AiCoincast v19.8", layout="wide")
+st.title("🚀 AiCoincast Terminal v19.8 (Lite)")
 
-# --- UI LOGIC ---
-st.title("🛰️ AiCoincast Terminal: v19.8 The Eternal Broadcaster")
+# Sidebar: Refresh Control
+st.sidebar.header("⚙️ Settings")
+ref_rate = st.sidebar.slider("Auto-Refresh (Minutes)", 1, 10, 5)
 
-with st.sidebar:
-    st.header("🔐 Sovereign Vault")
-    email = st.text_input("Corporate Email", "vipin@reliance.com")
-    m_key = st.text_input("Master Key", type="password")
-    gemini_api = st.text_input("API Access Key", type="password")
+# --- Logic: Auto-Refreshing Grid ---
+@st.fragment(run_every=ref_rate * 60)
+def show_assets():
+    st.subheader(f"📊 Live Monitor [{datetime.now().strftime('%H:%M:%S')}]")
+    # 6 Columns for 'Shrinked' view
+    cols = st.columns(6) 
     
-    if m_key == SOVEREIGN_CONTEXT["master_key"]:
-        st.success("Identity Verified: Sovereign Master Active")
-        access = True
-    else:
-        st.warning("Locked: Enter Master Key to restore v19.7 Data")
-        access = False
+    for i, coin in enumerate(coins_30):
+        with cols[i % 6]:
+            # Rate limiting check: Har 10 coins ke baad chota gap
+            if i > 0 and i % 10 == 0:
+                time.sleep(0.5)
+            
+            # Yahan aap apna real price logic dal sakte hain
+            st.metric(label=coin, value=f"₹{i+1*10.5:.2f}", delta=f"{i%4}%")
 
-if access:
-    # --- BROADCAST HUB ---
-    tab1, tab2, tab3 = st.tabs(["📡 Live Broadcast", "📊 Portfolio Sentinel", "🏠 Personal Node"])
+# --- Logic: Short News Card ---
+def get_short_news():
+    try:
+        # Strict prompt for shrinking content
+        p = "Top 3 crypto news in Hinglish. Max 8 words per point. Bullet points only."
+        res = model.generate_content(p)
+        return res.text
+    except Exception as e:
+        if "429" in str(e): return "⚠️ Quota hit! Wait 1 min."
+        return "Error loading news."
 
-    with tab1:
-        st.subheader("Hinglish News Card Engine")
-        if st.button("Generate v19.8 News Card"):
-            model = init_sovereign_ai(gemini_api)
-            if model:
-                with st.spinner("Fetching X-Feed & 30-Coin Tracker..."):
-                    prompt = f"Generate a witty Hinglish news card for {SOVEREIGN_CONTEXT['holdings']}. Mention market sentiment and pulse for an Indian investor from {SOVEREIGN_CONTEXT['location']}."
-                    response = model.generate_content(prompt)
-                    st.info(response.text)
+# --- Layout Execution ---
+show_assets()
 
-    with tab2:
-        st.subheader("Asset Monitor")
-        cols = st.columns(3)
-        cols[0].metric("Nifty 50", "24,812.50", "+1.4%")
-        cols[1].metric("XRT / INR", "₹384.20", "🚀 12%")
-        cols[2].metric("LAI / INR", "₹0.92", "📉 -2%")
+st.divider()
 
-    with tab3:
-        st.subheader("Sovereign Life Sync")
-        st.write(f"📍 **Location:** {SOVEREIGN_CONTEXT['location']}")
-        st.write(f"⚖️ **Spiritual Alignment:** {SOVEREIGN_CONTEXT['zodiac_preference']}")
-        st.progress(65, text="Home Project: Plumbing Phase")
-        st.write("📚 **Next Step:** IGNOU/Nalanda MBA Application Status")
+# Compact News Card
+with st.expander("📰 v19.8 News Card (Hinglish)", expanded=True):
+    if st.button("Generate Bullet News"):
+        with st.spinner("Shortening..."):
+            news_data = get_short_news()
+            st.markdown(news_data)
 
-else:
-    st.info("Terminal is in Standby Mode. Waiting for Master Key...")
+st.caption("Auto-refresh active. Optimized for ResourceExhausted errors.")
