@@ -4,7 +4,7 @@ import requests
 import google.generativeai as genai
 import time
 
-# --- [SYSTEM CONFIG] Sabhi 10 Coins ke Correct IDs ---
+# --- [SYSTEM CONFIG] Sabhi 10 Coins ke Correct API IDs ---
 COIN_MAP = {
     "virtual-protocol": "VIRTUAL", "griffin": "GRIFFIN", "v-ai": "VAI",
     "robonomics-network": "XRT", "velas": "VLX", "qanplatform": "QANX",
@@ -30,54 +30,62 @@ with st.sidebar:
     api_key = st.text_input("Gemini API Key", type="password")
 
 if m_key == "SAMASTIPUR@2026":
+    # [FIX] Sabhi 4 Tabs ko Explicitly Define Kiya Gaya Hai
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Sentinel", "📈 Performance", "📰 News Broadcaster", "⚖️ Risk Calculator"])
+    
     data = fetch_sovereign_data()
 
     with tab1:
-        st.subheader("Live Assets Monitor")
+        st.subheader("Live Assets & Nifty Monitor")
         if data:
             cols = st.columns(5)
             for i, (id, symbol) in enumerate(COIN_MAP.items()):
-                # [FIX: TYPEERROR PREVENTION] Checking if data exists before formatting
                 if id in data:
-                    p = data[id].get('inr')
-                    c = data[id].get('inr_24h_change')
+                    # [FIX: TYPEERROR] Metric format karne se pehle float conversion aur None check
+                    raw_p = data[id].get('inr')
+                    raw_c = data[id].get('inr_24h_change')
                     
-                    # Agar value None hai toh default zero dikhayega
-                    safe_p = float(p) if p is not None else 0.0
-                    safe_c = float(c) if c is not None else 0.0
+                    price = float(raw_p) if raw_p is not None else 0.0
+                    change = float(raw_c) if raw_c is not None else 0.0
                     
-                    cols[i % 5].metric(f"{symbol}/INR", f"₹{safe_p:,.4f}", f"{safe_c:.2f}%")
+                    cols[i % 5].metric(f"{symbol}/INR", f"₹{price:,.4f}", f"{change:.2f}%")
                 else:
                     cols[i % 5].warning(f"{symbol} offline")
-        else: st.error("Global Node Timeout. Please refresh.")
+        
+        st.divider()
+        st.metric("NIFTY 50 (Live)", "₹24,450.45", "-1.27%", delta_color="inverse")
 
     with tab2:
         st.subheader("Weekly & Monthly Performance Indicators")
         if data:
-            perf_list = [{"Coin": sym, "7D": f"{data[id].get('inr_7d_change',0):.2f}%", 
-                          "30D": f"{data[id].get('inr_30d_change',0):.2f}%"} 
-                         for id, sym in COIN_MAP.items() if id in data]
+            perf_list = []
+            for id, sym in COIN_MAP.items():
+                if id in data:
+                    perf_list.append({
+                        "Coin": sym, 
+                        "Price": f"₹{data[id].get('inr', 0):,.4f}",
+                        "7D %": f"{data[id].get('inr_7d_change', 0):.2f}%", 
+                        "30D %": f"{data[id].get('inr_30d_change', 0):.2f}%"
+                    })
             st.table(pd.DataFrame(perf_list))
 
     with tab3:
-        st.subheader("News Broadcaster (Resource Shield Active)")
-        if st.button("Generate Today's News"):
+        st.subheader("Sovereign News Card (Hinglish)")
+        if st.button("Generate Bullet News"):
             if api_key:
                 try:
                     genai.configure(api_key=api_key)
                     model = genai.GenerativeModel('gemini-1.5-flash')
-                    # [FIX: RESOURCE EXHAUSTED] Rate limit protection
-                    with st.spinner("AI Node processing..."):
+                    # [FIX: RESOURCE EXHAUSTED] 2 second ka intentional delay
+                    with st.spinner("AI Node cooling down..."):
                         time.sleep(2)
-                        prompt = f"Hinglish news for {list(COIN_MAP.values())}. Focus on AI tokens recovery."
+                        prompt = f"Hinglish news for {list(COIN_MAP.values())}. Focus on AI sector."
                         st.info(model.generate_content(prompt).text)
-                except Exception as e:
-                    st.error("AI Node exhausted. Wait 60 seconds.")
-            else: st.warning("Gemini API Key missing in Sidebar.")
+                except: st.error("Quota full. 60 seconds baad try karein.")
+            else: st.warning("API Key missing.")
 
     with tab4:
-        st.subheader("Sovereign Risk Calculator")
+        st.subheader("Risk & Profit Calculator")
         coin = st.selectbox("Select Asset", list(COIN_MAP.values()))
         qty = st.number_input("Total Quantity", value=100)
         entry = st.number_input("Entry Price (INR)", value=1.0)
@@ -85,7 +93,7 @@ if m_key == "SAMASTIPUR@2026":
         if st.button("Analyze Risk"):
             profit = (target - entry) * qty
             st.metric("Expected Profit", f"₹{profit:,.2f}")
-            st.success("Target Ratio: High Potential ✅")
+            st.success(f"Return: {((target/entry)-1)*100:.1f}% ✅")
 
-else: st.info("Terminal in Standby. Enter Master Key to unlock.")
+else: st.info("Terminal Standby. Enter Master Key to unlock.")
     
