@@ -95,4 +95,4 @@ if m_key == "SAMASTIPUR@2026":
             st.success(f"Potential Return: {((target/entry)-1)*100:.2f}% ✅")
 
 else: st.info("Terminal in Standby. Enter Master Key to unlock all folders.")
-            
+    
