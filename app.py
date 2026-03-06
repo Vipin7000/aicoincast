@@ -1,65 +1,80 @@
 import streamlit as st
+import pandas as pd
+import requests
 import google.generativeai as genai
 import time
-from datetime import datetime
 
-# --- API Config ---
-genai.configure(api_key="YOUR_API_KEY")
-model = genai.GenerativeModel('gemini-1.5-flash')
+# --- SYSTEM CONFIG ---
+st.set_page_config(page_title="AiCoincast v19.8 Pro", layout="wide")
+MASTER_KEY = "SAMASTIPUR@2026"
 
-# --- 30 Coins Full List ---
-# Aapke invested coins (XRT, LAI, QRL) top par hain
-coins_30 = [
-    "XRT", "LAI", "QRL", "BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE",
-    "AVAX", "DOT", "TRX", "LINK", "MATIC", "SHIB", "LTC", "BCH", "UNI", "NEAR",
-    "ARB", "APT", "OP", "STX", "FIL", "GRT", "RNDR", "INJ", "PEPE", "BONK"
-]
+# Updated Sovereign Asset List (v19.8)
+COIN_MAP = {
+    "virtual-protocol": "VIRTUAL", "griffin": "GRIFFIN", "v-ai": "VAI",
+    "robonomics-network": "XRT", "velas": "VLX", "qanplatform": "QANX",
+    "chaingpt": "CGPT", "sinverse": "SIN", "matic-network": "POLYGON", "nftb": "NFTB"
+}
 
-# --- UI Setup ---
-st.set_page_config(page_title="AiCoincast v19.8", layout="wide")
-st.title("🚀 AiCoincast Terminal v19.8 (Lite)")
-
-# Sidebar: Refresh Control
-st.sidebar.header("⚙️ Settings")
-ref_rate = st.sidebar.slider("Auto-Refresh (Minutes)", 1, 10, 5)
-
-# --- Logic: Auto-Refreshing Grid ---
-@st.fragment(run_every=ref_rate * 60)
-def show_assets():
-    st.subheader(f"📊 Live Monitor [{datetime.now().strftime('%H:%M:%S')}]")
-    # 6 Columns for 'Shrinked' view
-    cols = st.columns(6) 
-    
-    for i, coin in enumerate(coins_30):
-        with cols[i % 6]:
-            # Rate limiting check: Har 10 coins ke baad chota gap
-            if i > 0 and i % 10 == 0:
-                time.sleep(0.5)
-            
-            # Yahan aap apna real price logic dal sakte hain
-            st.metric(label=coin, value=f"₹{i+1*10.5:.2f}", delta=f"{i%4}%")
-
-# --- Logic: Short News Card ---
-def get_short_news():
+def get_market_data():
+    ids = ",".join(COIN_MAP.keys())
+    url = f"https://api.coingecko.com/api/v3/simple/price?ids={ids}&vs_currencies=inr&include_24hr_change=true&include_7d_change=true&include_30d_change=true"
     try:
-        # Strict prompt for shrinking content
-        p = "Top 3 crypto news in Hinglish. Max 8 words per point. Bullet points only."
-        res = model.generate_content(p)
-        return res.text
-    except Exception as e:
-        if "429" in str(e): return "⚠️ Quota hit! Wait 1 min."
-        return "Error loading news."
+        return requests.get(url, timeout=10).json()
+    except: return None
 
-# --- Layout Execution ---
-show_assets()
+# --- UI LOGIC ---
+st.title("🛰️ AiCoincast Terminal v19.8 Pro: Sovereign Hub")
 
-st.divider()
+with st.sidebar:
+    st.header("🔐 Vault Access")
+    m_key = st.text_input("Master Key", type="password")
+    api_key = st.text_input("Gemini API Key", type="password")
 
-# Compact News Card
-with st.expander("📰 v19.8 News Card (Hinglish)", expanded=True):
-    if st.button("Generate Bullet News"):
-        with st.spinner("Shortening..."):
-            news_data = get_short_news()
-            st.markdown(news_data)
+if m_key == MASTER_KEY:
+    tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Monitor", "📈 Performance", "📰 News Card", "⚖️ Risk Calculator"])
+    data = get_market_data()
 
-st.caption("Auto-refresh active. Optimized for ResourceExhausted errors.")
+    with tab1:
+        st.subheader("Live Price Node (Real-Time)")
+        if data:
+            cols = st.columns(5)
+            for i, (id, sym) in enumerate(COIN_MAP.items()):
+                price, change = data[id]['inr'], data[id]['inr_24h_change']
+                cols[i % 5].metric(f"{sym}/INR", f"₹{price:,.4f}", f"{change:.2f}%")
+
+    with tab2:
+        st.subheader("Weekly & Monthly Performance Indicators")
+        if data:
+            perf_data = [{"Asset": COIN_MAP[id], "Price": f"₹{data[id]['inr']:,.4f}", 
+                          "7D Change": f"{data[id].get('inr_7d_change', 0):.2f}%", 
+                          "30D Change": f"{data[id].get('inr_30d_change', 0):.2f}%"} for id in COIN_MAP]
+            st.table(pd.DataFrame(perf_data))
+
+    with tab3:
+        st.subheader("Hinglish News Generator")
+        if st.button("Generate v19.8 News Card"):
+            try:
+                genai.configure(api_key=api_key)
+                model = genai.GenerativeModel('gemini-1.5-flash')
+                prompt = f"Provide a witty Hinglish news update for {list(COIN_MAP.values())}. Mention Nifty's 1.2% dip and Crypto Fear Index at 19."
+                st.info(model.generate_content(prompt).text)
+            except: st.error("AI Node Offline. Check API Key.")
+
+    with tab4:
+        st.subheader("Sovereign Risk-to-Reward Calculator")
+        coin = st.selectbox("Select Asset", list(COIN_MAP.values()))
+        entry = st.number_input("Entry Price (INR)", value=1.0)
+        target = st.number_input("Target Price (INR)", value=1.5)
+        stoploss = st.number_input("Stop Loss (INR)", value=0.8)
+        
+        if st.button("Calculate Ratio"):
+            risk = entry - stoploss
+            reward = target - entry
+            ratio = reward / risk if risk > 0 else 0
+            st.metric("Risk:Reward Ratio", f"1:{ratio:.2f}")
+            if ratio >= 3: st.success("Strong Buy Signal: High Reward Setup ✅")
+            else: st.warning("Caution: Risk is high compared to reward. ⚠️")
+
+else:
+    st.info("Terminal in Standby. Awaiting Master Key...")
+    
