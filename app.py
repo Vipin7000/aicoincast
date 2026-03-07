@@ -92,4 +92,4 @@ if m_key == MASTER_KEY:
 
 else:
     st.info("Terminal Standby. Enter Master Key (SAMASTIPUR@2026) to unlock.")
-    
+        
