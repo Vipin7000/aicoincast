@@ -5,8 +5,8 @@ import google.generativeai as genai
 import feedparser
 import re
 
-# --- [1. SYSTEM CONFIG & AUTO-SIDEBAR] ---
-# initial_sidebar_state="expanded" ensures the password option is always visible
+# --- [1. SYSTEM CONFIG & FORCED SIDEBAR] ---
+# initial_sidebar_state="expanded" ensures the password box is ALWAYS visible
 st.set_page_config(
     page_title="AiCoincast Terminal v19.9 Ultra", 
     layout="wide", 
@@ -15,7 +15,7 @@ st.set_page_config(
 
 MASTER_KEY = "SAMASTIPUR@2026"
 
-# Force Royal Purple Page Theme & Custom CSS
+# [HYBRID CSS] Royal Purple Theme + Sentinel Glow
 st.markdown("""
     <style>
     .stApp { background-color: #2D1B4E !important; }
@@ -23,21 +23,21 @@ st.markdown("""
     .stTabs [data-baseweb="tab-list"] { background-color: #1E1035 !important; border-radius: 10px; }
     .stTabs [data-baseweb="tab"] { color: white !important; font-weight: bold; }
     
-    /* Master Key Box Styling in Sidebar */
+    /* Sidebar Styling for Password Entry */
     div[data-testid="stSidebar"] { background-color: #1E1035 !important; border-right: 1px solid #7D52B5; }
     
-    /* Folder 1: Elite Glow Cards */
-    .crypto-card { background: #000000; padding: 2px; border-radius: 12px; margin-bottom: 12px; transition: 0.3s; }
+    /* Folder 1: Sentinel Cards */
+    .crypto-card { background: #000000; padding: 2px; border-radius: 12px; margin-bottom: 12px; }
     .inner-card { display: flex; align-items: center; background: #E3F2FD; padding: 15px; border-radius: 10px; position: relative; }
     .hot-tag { position: absolute; top: 5px; right: 5px; background: #FF4B4B; color: white !important; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
     
-    /* Broadcast Glass-morphism UI */
-    .broadcast-card { background: rgba(227, 242, 253, 0.95) !important; padding: 18px; border-radius: 15px; border-left: 8px solid #2196F3; margin-bottom: 20px; border: 1px solid #BBDEFB; }
+    /* Broadcast UI Fix */
+    .broadcast-card { background: rgba(227, 242, 253, 0.95) !important; padding: 18px; border-radius: 15px; border-left: 8px solid #2196F3; border: 1px solid #BBDEFB; }
     .broadcast-text { color: #0D47A1 !important; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-# [MASTER ALGORITHM: 12-COIN MAPPING]
+# [ALGORITHM: VERIFIED 12-COIN MAPPING]
 COIN_MAP = {
     "bitcoin": "BTC", "ethereum": "ETH", "virtual-protocol": "VIRTUAL", 
     "griffin-2": "GRIFFIN", "v-ai-2": "VAI", "robonomics-network": "XRT", 
@@ -57,7 +57,7 @@ def fetch_pro_data():
 # --- [2. UI LOGIC & TICKER-SHIELD] ---
 data = fetch_pro_data()
 
-# [FIX] Ticker-Shield: Ensures no crash if data is missing
+# [ALGORITHM FIX] Ticker-Shield prevents TypeError/Crash
 ticker_content = "💎 LIVE GLOBAL: BTC: ₹5,684,210 | ETH: ₹324,150 | SOL: ₹12,480 | MATIC: ₹33.15 | XRT: ₹525.20"
 if isinstance(data, list) and len(data) > 0:
     try:
@@ -70,15 +70,15 @@ st.markdown(f"""
         <marquee behavior="scroll" direction="left" style="color: #00FF00; font-family: monospace; font-size: 18px; font-weight: bold;">🚀 {ticker_content}</marquee>
     </div>""", unsafe_allow_html=True)
 
-# --- [3. SIDEBAR: THE PASSWORD ADD OPTION] ---
+# --- [3. SIDEBAR: THE SECURE VAULT] ---
 with st.sidebar:
     st.header("🔐 Secure Vault")
-    # Master Key option is now explicitly placed here
+    # This box will now always be visible on the left side
     m_key = st.text_input("Enter Master Key", type="password", placeholder="SAMASTIPUR@2026")
     
     if data:
         avg = sum([c.get('price_change_percentage_24h', 0) or 0 for c in data]) / len(data)
-        st.info(f"Market Sentiment: {'GREED 🚀' if avg > 0 else 'FEAR 📉'}")
+        st.info(f"Sentiment: {'GREED 🚀' if avg > 0 else 'FEAR 📉'}")
         
     api_key_raw = st.text_input("Gemini API Key", type="password")
     api_key = re.sub(r'[^a-zA-Z0-9_-]', '', api_key_raw.strip())
@@ -88,7 +88,7 @@ if m_key == MASTER_KEY:
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Sentinel", "📈 Performance Pro", "📰 Master Broadcast", "⚖️ Risk Calc"])
     
     with tab1:
-        st.subheader("🛰️ Market Sentinel (12 Coins Active)")
+        st.subheader("🛰️ Market Sentinel (12 Coins Glow Active)")
         if data:
             max_vol = max(data, key=lambda x: x.get('total_volume', 0) or 0).get('id', '')
             cols = st.columns(4)
@@ -111,21 +111,12 @@ if m_key == MASTER_KEY:
                             </div>
                         </div>
                     </div>""", unsafe_allow_html=True)
+        else: st.warning("🔄 Waiting for Data Nodes...")
 
     with tab2:
         st.subheader("📈 Institutional Performance Metrics")
         if data:
-            formatted = []
-            for c in data:
-                c24 = c.get('price_change_percentage_24h', 0) or 0
-                formatted.append({
-                    "Logo": f'<img src="{c.get("image")}" width="25">',
-                    "Coin": c.get('name'),
-                    "Price": f"₹{c.get('current_price', 0):,.2f}",
-                    "24h %": f'<span style="color:{"#00FF00" if c24>=0 else "#FF4B4B"}; font-weight:bold;">{c24:.2f}%</span>',
-                    "Volume": f"₹{c.get('total_volume', 0) or 0:,}",
-                    "ATH Dist": f'<span style="color:#FF4B4B;">{c.get("ath_change_percentage",0):.1f}%</span>'
-                })
+            formatted = [{"Logo": f'<img src="{c["image"]}" width="25">', "Coin": c["name"], "Price": f"₹{c['current_price']:,.2f}", "24h %": f"{c['price_change_percentage_24h']:.2f}%", "ATH Dist": f"{c['ath_change_percentage']:.1f}%"} for c in data]
             st.write(pd.DataFrame(formatted).to_html(escape=False, index=False), unsafe_allow_html=True)
 
     with tab3:
@@ -133,16 +124,9 @@ if m_key == MASTER_KEY:
         st.markdown("""
         <div class="broadcast-card">
             <h4 style="color:#1565C0 !important; margin:0;">🐦 Twitter (X) Live Signals</h4>
-            <p class="broadcast-text">🛰️ $XRT & $LAI: Recovery phase detected. Samastipur AI nodes scaling.</p>
+            <p class="broadcast-text">🛰️ $XRT & $LAI: Recovery phase active. Samastipur AI nodes scaling.</p>
         </div>""", unsafe_allow_html=True)
-        if st.button("🚀 Run AI Deep-Scan"):
-            if api_key:
-                try:
-                    genai.configure(api_key=api_key)
-                    model = genai.GenerativeModel('gemini-1.5-flash')
-                    st.success(model.generate_content("Hinglish news for BTC, ETH and AI coins in 2026.").text)
-                except: st.error("AI Node Offline.")
 
 else:
-    st.info("⚠️ Master Key Required. Expand Sidebar (←) and enter SAMASTIPUR@2026.")
-                   
+    st.info("⚠️ Master Key Required. Use the Sidebar on the left to unlock.")
+                          
