@@ -12,7 +12,7 @@ MASTER_KEY = "SAMASTIPUR@2026"
 
 # Verified IDs for all 10 coins (Ensures they stay ONLINE)
 COIN_MAP = {
-    "virtual-protocol": "VIRTUAL", "griffin": "GRIFFIN", "v-ai-2": "VAI",
+    "virtual-protocol": "VIRTUAL", "griffin-2": "GRIFFIN", "v-ai-2": "VAI",
     "robonomics-network": "XRT", "velas": "VLX", "qanplatform": "QANX",
     "chaingpt": "CGPT", "sinverse": "SIN", "matic-network": "POLYGON", "nftb": "NFTB"
 }
@@ -20,8 +20,7 @@ COIN_MAP = {
 @st.cache_data(ttl=60)
 def fetch_pro_data():
     ids = ",".join(COIN_MAP.keys())
-    # [NEW] Fetching images and market cap data
-    url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids={ids}&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h,7d,30d"
+    url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids={ids}&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h,7d"
     try:
         response = requests.get(url, timeout=10)
         return response.json() if response.status_code == 200 else []
@@ -34,7 +33,7 @@ st.title("🛰️ AiCoincast Terminal v19.8 (Pro Build)")
 st.markdown("""
 <div style="background: #000000; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #00ff00;">
     <marquee behavior="scroll" direction="left" style="color: #00ff00; font-family: monospace; font-size: 16px; font-weight: bold;">
-        💎 LIVE: BTC: ₹6,243,683 (-0.1%) | ETH: ₹180,809 (-1.0%) | SOL: ₹7,667.83 (-1.5%) | MATIC: ₹33.15 (+1.2%) | XRT: ₹525.20 (+2.5%)
+        💎 LIVE: BTC: ₹6,243,683 | ETH: ₹180,809 | SOL: ₹7,667.83 | MATIC: ₹33.15 (+1.2%) | XRT: ₹525.20 (+2.5%) | VIRTUAL: ₹60.65 (-3.3%)
     </marquee>
 </div>""", unsafe_allow_html=True)
 
@@ -52,9 +51,13 @@ if m_key == MASTER_KEY:
     with tab1:
         st.subheader("Live 10-Coin Monitor")
         cols = st.columns(5)
-        for i, coin in enumerate(data):
-            p, c = coin.get('current_price'), coin.get('price_change_percentage_24h')
-            cols[i % 5].metric(f"{coin['symbol'].upper()}/INR", f"₹{float(p):,.2f}", f"{float(c or 0):.2f}%")
+        # [FIX] TypeError Protection: Safe float conversion
+        if data:
+            for i, coin in enumerate(data):
+                p = coin.get('current_price', 0)
+                c = coin.get('price_change_percentage_24h', 0)
+                cols[i % 5].metric(f"{coin['symbol'].upper()}/INR", f"₹{float(p or 0):,.2f}", f"{float(c or 0):.2f}%")
+        else: st.warning("Connecting to Global Market Nodes...")
         st.divider()
         st.metric("NIFTY 50 (India)", "₹24,469.10", "-1.20%", delta_color="inverse")
 
@@ -64,21 +67,19 @@ if m_key == MASTER_KEY:
         if data:
             formatted_data = []
             for coin in data:
-                # Red/Green logic for price change
-                change_24h = coin.get('price_change_percentage_24h', 0)
+                change_24h = coin.get('price_change_percentage_24h', 0) or 0
                 color = "green" if change_24h >= 0 else "red"
                 
                 formatted_data.append({
-                    "Logo": f'<img src="{coin["image"]}" width="25">',
-                    "Coin": coin['name'],
-                    "Price": f"₹{coin['current_price']:,.2f}",
+                    "Logo": f'<img src="{coin.get("image", "")}" width="25">',
+                    "Coin": coin.get('name', 'N/A'),
+                    "Price": f"₹{coin.get('current_price', 0):,.2f}",
                     "24h %": f'<span style="color:{color}; font-weight:bold;">{change_24h:.2f}%</span>',
-                    "Market Cap": f"₹{coin['market_cap']:,}",
-                    "7D %": f"{coin.get('price_change_percentage_7d_in_currency', 0):.2f}%"
+                    "Market Cap": f"₹{coin.get('market_cap', 0):,}",
+                    "7D %": f"{coin.get('price_change_percentage_7d_in_currency', 0) or 0:.2f}%"
                 })
             
             df = pd.DataFrame(formatted_data)
-            # Rendering HTML for logos and colors
             st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
         else: st.warning("Re-Syncing Market Data...")
 
@@ -88,34 +89,25 @@ if m_key == MASTER_KEY:
         <div style="background-color:#0d1117; padding:15px; border-radius:10px; border: 1px solid #30363d; border-left: 5px solid #00acee;">
             <h4 style="color:#00acee; margin:0;">🐦 Sovereign Master Broadcast</h4>
             <p style="color:white; font-size:14px; margin-top:10px;">
-                <b>Latest:</b> $XRT scaling nodes | $LAI recovery (+12%) | $POLYGON bridge surging.<br>
+                <b>Latest:</b> $XRT scaling nodes | $LAI recovery mode | $POLYGON bridge surging.<br>
                 <b>Sentiment:</b> <span style="color:#00ff00;">Bullish Decoupling</span> (68% Confidence)
             </p>
         </div>""", unsafe_allow_html=True)
         
-        col_ai, col_rss = st.columns(2)
-        with col_ai:
-            if st.button("🚀 Generate AI News"):
-                if api_key:
-                    try:
-                        genai.configure(api_key=api_key)
-                        model = genai.GenerativeModel('gemini-1.5-flash')
-                        st.success(model.generate_content("Hinglish update: XRT and LAI trends.").text)
-                    except: st.error("AI Node exhausted. Clear quotes.")
-        with col_rss:
-            st.caption("🌍 Global RSS Feed")
-            try:
-                feed = feedparser.parse("https://cointelegraph.com/rss/tag/bitcoin")
-                for entry in feed.entries[:3]: st.markdown(f"🔹 <small>[{entry.title}]({entry.link})</small>", unsafe_allow_html=True)
-            except: st.warning("RSS Pending")
+        if st.button("🚀 Generate AI News"):
+            if api_key:
+                try:
+                    genai.configure(api_key=api_key)
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    st.success(model.generate_content("Quick Hinglish update for my 10 coins.").text)
+                except: st.error("AI Node exhausted. Check API Key.")
 
     with tab4:
         st.subheader("Risk & Profit Calculator")
-        coin = st.selectbox("Select Asset", [c['name'] for c in data]) if data else st.info("Loading...")
         entry = st.number_input("Entry Price", value=1.0)
         target = st.number_input("Target Price", value=1.5)
         if st.button("Calculate"):
             st.success(f"Potential Return: {((target/entry)-1)*100:.2f}% ✅")
 
 else: st.info("Terminal Standby. Enter Master Key (SAMASTIPUR@2026) to access.")
-                
+            
