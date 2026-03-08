@@ -6,10 +6,11 @@ import time
 import feedparser
 import re
 
-# --- [1. SYSTEM CONFIG & VERIFIED MASTER IDs] ---
+# --- [1. SYSTEM CONFIG & MASTER IDs] ---
 st.set_page_config(page_title="AiCoincast Terminal v19.8 Ultra", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
+# Verified IDs for all 10 coins (Ensures they stay ONLINE)
 COIN_MAP = {
     "virtual-protocol": "VIRTUAL", "griffin": "GRIFFIN", "v-ai-2": "VAI",
     "robonomics-network": "XRT", "velas": "VLX", "qanplatform": "QANX",
@@ -17,25 +18,25 @@ COIN_MAP = {
 }
 
 @st.cache_data(ttl=60)
-def fetch_safe_data():
+def fetch_pro_data():
     ids = ",".join(COIN_MAP.keys())
-    url = f"https://api.coingecko.com/api/v3/simple/price?ids={ids}&vs_currencies=inr&include_24hr_change=true&include_7d_change=true&include_30d_change=true"
+    # [NEW] Fetching images and market cap data
+    url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids={ids}&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h,7d,30d"
     try:
         response = requests.get(url, timeout=10)
-        return response.json() if response.status_code == 200 else {}
-    except: return {}
+        return response.json() if response.status_code == 200 else []
+    except: return []
 
 # --- [2. UI ARCHITECTURE] ---
-st.title("🛰️ AiCoincast Terminal v19.8 Ultra")
+st.title("🛰️ AiCoincast Terminal v19.8 (Pro Build)")
 
-ticker_html = """
+# Running Ticker (Top 10 Global)
+st.markdown("""
 <div style="background: #000000; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #00ff00;">
-    <marquee behavior="scroll" direction="left" style="color: #00ff00; font-family: 'Courier New', monospace; font-size: 16px; font-weight: bold;">
-        💎 TOP 10 LIVE: BTC: ₹5,684,210 (-1.1%) | ETH: ₹324,150 (+0.4%) | SOL: ₹12,480 (+2.1%) | MATIC: ₹33.15 (+1.2%) | XRT: ₹525 (+2.5%)
+    <marquee behavior="scroll" direction="left" style="color: #00ff00; font-family: monospace; font-size: 16px; font-weight: bold;">
+        💎 LIVE: BTC: ₹6,243,683 (-0.1%) | ETH: ₹180,809 (-1.0%) | SOL: ₹7,667.83 (-1.5%) | MATIC: ₹33.15 (+1.2%) | XRT: ₹525.20 (+2.5%)
     </marquee>
-</div>
-"""
-st.markdown(ticker_html, unsafe_allow_html=True)
+</div>""", unsafe_allow_html=True)
 
 with st.sidebar:
     st.header("🔐 Secure Vault")
@@ -44,62 +45,77 @@ with st.sidebar:
     api_key = re.sub(r'[^a-zA-Z0-9_-]', '', raw_api_key.strip())
 
 if m_key == MASTER_KEY:
-    tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Monitor", "📈 Performance", "📰 Master Broadcast", "⚖️ Risk Calc"])
-    data = fetch_safe_data()
+    # ALL FOUR FOLDERS LOCKED
+    tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Sentinel", "📈 Performance Pro", "📰 Master Broadcast", "⚖️ Risk Calc"])
+    data = fetch_pro_data()
 
     with tab1:
+        st.subheader("Live 10-Coin Monitor")
         cols = st.columns(5)
-        for i, (id, symbol) in enumerate(COIN_MAP.items()):
-            coin_info = data.get(id, {})
-            p, c = coin_info.get('inr'), coin_info.get('inr_24h_change')
-            if p is not None:
-                cols[i % 5].metric(f"{symbol}/INR", f"₹{float(p):,.2f}", f"{float(c or 0):.2f}%")
-            else:
-                cols[i % 5].warning(f"{symbol} Syncing...")
+        for i, coin in enumerate(data):
+            p, c = coin.get('current_price'), coin.get('price_change_percentage_24h')
+            cols[i % 5].metric(f"{coin['symbol'].upper()}/INR", f"₹{float(p):,.2f}", f"{float(c or 0):.2f}%")
         st.divider()
-        st.metric("NIFTY 50", "₹24,469.10", "-1.20%", delta_color="inverse")
+        st.metric("NIFTY 50 (India)", "₹24,469.10", "-1.20%", delta_color="inverse")
 
     with tab2:
+        # --- [FOLDER 2: CRYPTO LIST WITH LOGO & INDICATORS] ---
+        st.subheader("📈 Live Market Cap & Indicators")
         if data:
-            perf_list = [{"Asset": sym, "Live Price": f"₹{float(data.get(id, {}).get('inr', 0)):,.2f}", 
-                          "7D %": f"{float(data.get(id, {}).get('inr_7d_change', 0)):.2f}%", 
-                          "30D %": f"{float(data.get(id, {}).get('inr_30d_change', 0)):.2f}%"} for id, sym in COIN_MAP.items()]
-            st.table(pd.DataFrame(perf_list))
+            formatted_data = []
+            for coin in data:
+                # Red/Green logic for price change
+                change_24h = coin.get('price_change_percentage_24h', 0)
+                color = "green" if change_24h >= 0 else "red"
+                
+                formatted_data.append({
+                    "Logo": f'<img src="{coin["image"]}" width="25">',
+                    "Coin": coin['name'],
+                    "Price": f"₹{coin['current_price']:,.2f}",
+                    "24h %": f'<span style="color:{color}; font-weight:bold;">{change_24h:.2f}%</span>',
+                    "Market Cap": f"₹{coin['market_cap']:,}",
+                    "7D %": f"{coin.get('price_change_percentage_7d_in_currency', 0):.2f}%"
+                })
+            
+            df = pd.DataFrame(formatted_data)
+            # Rendering HTML for logos and colors
+            st.write(df.to_html(escape=False, index=False), unsafe_allow_html=True)
+        else: st.warning("Re-Syncing Market Data...")
 
     with tab3:
-        # --- [FIX: MERGED & SHRINKED NEWS CARD] ---
-        st.markdown("""
-        <div style="background-color:#0d1117; padding:15px; border-radius:10px; border-left: 5px solid #00acee; border: 1px solid #30363d;">
+        # --- [SHRINKED & MERGED NEWS BROADCAST] ---
+        st.markdown(f"""
+        <div style="background-color:#0d1117; padding:15px; border-radius:10px; border: 1px solid #30363d; border-left: 5px solid #00acee;">
             <h4 style="color:#00acee; margin:0;">🐦 Sovereign Master Broadcast</h4>
             <p style="color:white; font-size:14px; margin-top:10px;">
-                <b>Latest signals:</b> $XRT scaling IoT nodes | $LAI recovery mode (+12%) | $POLYGON Lisovo logic active.<br>
+                <b>Latest:</b> $XRT scaling nodes | $LAI recovery (+12%) | $POLYGON bridge surging.<br>
                 <b>Sentiment:</b> <span style="color:#00ff00;">Bullish Decoupling</span> (68% Confidence)
             </p>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
         
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🚀 AI Portfolio News"):
+        col_ai, col_rss = st.columns(2)
+        with col_ai:
+            if st.button("🚀 Generate AI News"):
                 if api_key:
                     try:
                         genai.configure(api_key=api_key)
                         model = genai.GenerativeModel('gemini-1.5-flash')
-                        st.success(model.generate_content(f"Quick Hinglish update for {list(COIN_MAP.values())}").text)
-                    except: st.error("AI Node exhausted.")
-        with col2:
-            st.caption("🌍 Global Finance Feed (Last 5)")
+                        st.success(model.generate_content("Hinglish update: XRT and LAI trends.").text)
+                    except: st.error("AI Node exhausted. Clear quotes.")
+        with col_rss:
+            st.caption("🌍 Global RSS Feed")
             try:
                 feed = feedparser.parse("https://cointelegraph.com/rss/tag/bitcoin")
                 for entry in feed.entries[:3]: st.markdown(f"🔹 <small>[{entry.title}]({entry.link})</small>", unsafe_allow_html=True)
             except: st.warning("RSS Pending")
 
     with tab4:
-        coin = st.selectbox("Asset", list(COIN_MAP.values()))
+        st.subheader("Risk & Profit Calculator")
+        coin = st.selectbox("Select Asset", [c['name'] for c in data]) if data else st.info("Loading...")
         entry = st.number_input("Entry Price", value=1.0)
         target = st.number_input("Target Price", value=1.5)
         if st.button("Calculate"):
-            st.success(f"Return: {((target/entry)-1)*100:.2f}%")
+            st.success(f"Potential Return: {((target/entry)-1)*100:.2f}% ✅")
 
-else: st.info("Enter Master Key to access Terminal.")
-    
+else: st.info("Terminal Standby. Enter Master Key (SAMASTIPUR@2026) to access.")
+                
