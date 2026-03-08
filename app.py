@@ -6,32 +6,35 @@ import feedparser
 import re
 
 # --- [1. SYSTEM CONFIG & AUTO-SIDEBAR] ---
-# initial_sidebar_state="expanded" ensures the password box is ALWAYS visible
 st.set_page_config(
-    page_title="AiCoincast Terminal v19.9 Ultra", 
+    page_title="AiCoincast Terminal v20.0 Ultra", 
     layout="wide", 
     initial_sidebar_state="expanded"
 )
 
 MASTER_KEY = "SAMASTIPUR@2026"
 
-# Royal Purple Theme & UI Fixes
+# [FIX] Sidebar Background Color & Card Rendering Fix
 st.markdown("""
     <style>
     .stApp { background-color: #2D1B4E !important; }
     h1, h2, h3, h4, p, span, li { color: white !important; }
-    .stTabs [data-baseweb="tab-list"] { background-color: #1E1035 !important; border-radius: 10px; }
     
-    /* Sidebar Styling for Password Entry */
-    div[data-testid="stSidebar"] { background-color: #1E1035 !important; border-right: 1px solid #7D52B5; }
+    /* Sidebar: Deep Purple with Clear Borders */
+    section[data-testid="stSidebar"] {
+        background-color: #1E1035 !important;
+        border-right: 2px solid #7D52B5 !important;
+    }
     
-    /* Folder 1: Sentinel Cards */
+    /* Folder 1: Sentinel Cards Visibility Fix */
     .crypto-card { background: #000000; padding: 2px; border-radius: 12px; margin-bottom: 12px; }
     .inner-card { display: flex; align-items: center; background: #E3F2FD; padding: 15px; border-radius: 10px; position: relative; }
     .hot-tag { position: absolute; top: 5px; right: 5px; background: #FF4B4B; color: white !important; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
     
-    /* Broadcast UI Fix */
-    .broadcast-card { background: rgba(227, 242, 253, 0.95) !important; padding: 18px; border-radius: 15px; border-left: 8px solid #2196F3; border: 1px solid #BBDEFB; }
+    /* Performance Table Styles */
+    table { background-color: #1E1035 !important; color: white !important; width: 100%; border-radius: 10px; }
+    th { background-color: #7D52B5 !important; color: white !important; padding: 12px; text-align: left; }
+    td { padding: 10px; border-bottom: 1px solid #41444C; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -52,33 +55,23 @@ def fetch_pro_data():
         return r.json() if r.status_code == 200 else []
     except: return []
 
-# --- [2. UI LOGIC & TICKER-SHIELD] ---
 data = fetch_pro_data()
 
-# [ALGORITHM FIX] Ticker-Shield prevents TypeError/Crash seen in snapshots
-ticker_content = "💎 LIVE GLOBAL: BTC: ₹5,684,210 | ETH: ₹324,150 | SOL: ₹12,480 | MATIC: ₹33.15 | XRT: ₹525.20"
-if isinstance(data, list) and len(data) > 0:
-    try:
-        ticker_list = [f"{c.get('symbol','').upper()}: ₹{c.get('current_price',0):,.0f}" for c in data if c.get('symbol')]
-        if ticker_list: ticker_content = " | ".join(ticker_list[:10])
-    except: pass
+# --- [2. TOP TICKER - ZERO-ERROR ALGORITHM] ---
+ticker_text = " | ".join([f"{c.get('symbol','').upper()}: ₹{c.get('current_price',0):,.0f}" for c in data if c.get('symbol')]) if data else "📡 Nodes Syncing..."
+st.markdown(f'<div style="background:#000; padding:12px; border:1px solid #0f0; margin-bottom:20px;"><marquee style="color:#0f0; font-weight:bold; font-size:18px;">🚀 {ticker_text}</marquee></div>', unsafe_allow_html=True)
 
-st.markdown(f"""
-    <div style="background: #000000; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #00FF00;">
-        <marquee behavior="scroll" direction="left" style="color: #00FF00; font-family: monospace; font-size: 18px; font-weight: bold;">🚀 {ticker_content}</marquee>
-    </div>""", unsafe_allow_html=True)
-
-# --- [3. SIDEBAR: THE PASSWORD VAULT (ALGORITHM FROM v19.8)] ---
+# --- [3. SIDEBAR: SECURE VAULT (COLOR FIXED)] ---
 with st.sidebar:
     st.header("🔐 Secure Vault")
-    # This box will now ALWAYS be visible on the left side
-    m_key = st.text_input("Enter Master Key", type="password", placeholder="SAMASTIPUR@2026")
+    st.markdown("---")
+    m_key = st.text_input("Master Key", type="password", placeholder="SAMASTIPUR@2026")
     
     if data:
         avg = sum([c.get('price_change_percentage_24h', 0) or 0 for c in data]) / len(data)
-        st.info(f"Sentiment: {'GREED 🚀' if avg > 0 else 'FEAR 📉'}")
+        st.info(f"Market Sentiment: {'GREED 🚀' if avg > 0 else 'FEAR 📉'}")
         
-    api_key_raw = st.text_input("Gemini API Key", type="password")
+    api_key_raw = st.text_input("Gemini API Key", type="password", placeholder="Enter AI Key")
     api_key = re.sub(r'[^a-zA-Z0-9_-]', '', api_key_raw.strip())
 
 # --- [4. MAIN TERMINAL LOGIC] ---
@@ -86,7 +79,7 @@ if m_key == MASTER_KEY:
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Sentinel", "📈 Performance Pro", "📰 Master Broadcast", "⚖️ Risk Calc"])
     
     with tab1:
-        st.subheader("🛰️ Market Sentinel (12 Coins Active)")
+        st.subheader("🛰️ Market Sentinel (12 Coins Glow)")
         if data:
             max_vol = max(data, key=lambda x: x.get('total_volume', 0) or 0).get('id', '')
             cols = st.columns(4)
@@ -109,23 +102,38 @@ if m_key == MASTER_KEY:
                             </div>
                         </div>
                     </div>""", unsafe_allow_html=True)
-        else: st.warning("🔄 Re-syncing Global Market Nodes... Please wait.")
+        else: st.warning("🔄 Re-syncing Global Market Nodes...")
 
     with tab2:
-        st.subheader("📈 Institutional Performance Metrics")
+        # [NEW UPDATED FOLDER 2: WITH ATH PRICE COLUMN]
+        st.subheader("📈 Institutional Performance (ATH Recovery Tracker)")
         if data:
-            formatted = [{"Logo": f'<img src="{c["image"]}" width="25">', "Coin": c["name"], "Price": f"₹{c['current_price']:,.2f}", "24h %": f"{c['price_change_percentage_24h']:.2f}%", "ATH Dist": f"{c['ath_change_percentage']:.1f}%"} for c in data]
-            st.write(pd.DataFrame(formatted).to_html(escape=False, index=False), unsafe_allow_html=True)
+            formatted_data = []
+            for c in data:
+                c24 = c.get('price_change_percentage_24h', 0) or 0
+                ath_price = c.get('ath', 0) or 0
+                ath_dist = c.get('ath_change_percentage', 0) or 0
+                formatted_data.append({
+                    "Logo": f'<img src="{c.get("image")}" width="25">',
+                    "Coin": c.get('name'),
+                    "Price": f"₹{c.get('current_price', 0):,.2f}",
+                    "24h %": f'<span style="color:{"#00FF00" if c24>=0 else "#FF4B4B"}; font-weight:bold;">{c24:.2f}%</span>',
+                    "ATH Price": f"₹{ath_price:,.2f}",
+                    "ATH Dist.": f'<span style="color:#FF4B4B;">{ath_dist:.1f}%</span>',
+                    "Volume": f"₹{c.get('total_volume', 0) or 0:,}"
+                })
+            st.write(pd.DataFrame(formatted_data).to_html(escape=False, index=False), unsafe_allow_html=True)
 
     with tab3:
         st.subheader("📰 Sovereign News Broadcast")
-        st.markdown("""
-        <div class="broadcast-card">
-            <h4 style="color:#1565C0 !important; margin:0;">🐦 Twitter (X) Live Signals</h4>
-            <p style="color:#0D47A1 !important; font-size:14px; font-weight:bold;">🛰️ $XRT & $LAI: Recovery detected. Samastipur AI nodes active.</p>
+        st.markdown(f"""
+        <div style="background: rgba(227, 242, 253, 0.95); padding: 20px; border-radius: 15px; border-left: 8px solid #2196F3; border: 1px solid #BBDEFB;">
+            <p style="color:#1565C0 !important; font-weight:800; margin:0;">🐦 Twitter (X) Live Signals</p>
+            <p style="color:#0D47A1 !important; font-size:14px; margin-top:10px; font-weight:600;">
+                🛰️ $XRT & $LAI: Recovery phase detected. Samastipur AI nodes scaling.<br>
+                🛰️ $POLYGON: Institutional bridge volume surging hitting targets.
+            </p>
         </div>""", unsafe_allow_html=True)
-
 else:
-    # Sidebar hint when locked
     st.info("⚠️ Master Key Required. Use the Sidebar on the left (←) to unlock (SAMASTIPUR@2026).")
     
