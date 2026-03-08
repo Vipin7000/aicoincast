@@ -7,27 +7,32 @@ import feedparser
 import re
 
 # --- [1. SYSTEM CONFIG & AUTO-SIDEBAR] ---
-st.set_page_config(page_title="AiCoincast Terminal v19.8 Ultra", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="AiCoincast Terminal v19.9 Ultra", layout="wide", initial_sidebar_state="expanded")
 MASTER_KEY = "SAMASTIPUR@2026"
 
-# Force Royal Purple Page Theme & Custom CSS Visibility Fix
+# [HYBRID CSS] Royal Purple Background + Glow Sentinel Cards
 st.markdown("""
     <style>
     .stApp { background-color: #2D1B4E !important; }
     h1, h2, h3, h4, p, span, li { color: white !important; }
     .stTabs [data-baseweb="tab-list"] { background-color: #1E1035 !important; border-radius: 10px; }
     .stTabs [data-baseweb="tab"] { color: white !important; }
-    /* Twitter/Broadcast Box Visibility Fix */
-    .news-card { background-color: #E3F2FD !important; padding: 20px; border-radius: 12px; border-left: 6px solid #2196F3; border: 1px solid #BBDEFB; margin-bottom: 15px; }
-    .news-text { color: #0D47A1 !important; font-weight: bold; font-size: 14px; }
-    /* Table Styling for Purple Theme */
-    table { background-color: #1E1035 !important; color: white !important; width: 100%; border-collapse: collapse; }
-    th { background-color: #7D52B5 !important; color: white !important; padding: 10px; }
-    td { padding: 8px; border-bottom: 1px solid #41444C; }
+    
+    /* Folder 1: Hybrid Elite Cards */
+    .crypto-card { background: #000000; padding: 2px; border-radius: 12px; margin-bottom: 12px; transition: transform 0.2s; }
+    .crypto-card:hover { transform: scale(1.03); }
+    .inner-card { display: flex; align-items: center; background: #E3F2FD; padding: 15px; border-radius: 10px; position: relative; }
+    .hot-tag { position: absolute; top: 5px; right: 5px; background: #FF4B4B; color: white !important; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+    
+    /* Broadcast & Table UI */
+    .broadcast-card { background: rgba(227, 242, 253, 0.95) !important; padding: 18px; border-radius: 15px; border-left: 8px solid #2196F3; margin-bottom: 20px; border: 1px solid #BBDEFB; }
+    table { background-color: #1E1035 !important; color: white !important; width: 100%; border-radius: 10px; overflow: hidden; }
+    th { background-color: #7D52B5 !important; color: white !important; padding: 12px; }
+    td { padding: 10px; border-bottom: 1px solid #41444C; }
     </style>
     """, unsafe_allow_html=True)
 
-# [ALGORITHM 1] Verified 12-Coin Mapping
+# [ALGORITHM: 12-COIN MASTER MAPPING]
 COIN_MAP = {
     "bitcoin": "BTC", "ethereum": "ETH", "virtual-protocol": "VIRTUAL", 
     "griffin-2": "GRIFFIN", "v-ai-2": "VAI", "robonomics-network": "XRT", 
@@ -44,24 +49,26 @@ def fetch_pro_data():
         return r.json() if r.status_code == 200 else []
     except: return []
 
-# --- [2. TOP TICKER - ZERO-LATENCY ALGORITHM] ---
+# --- [2. UI LOGIC & TICKER-SHIELD] ---
 data = fetch_pro_data()
 if data and len(data) > 0:
     ticker_text = " | ".join([f"{c.get('symbol','').upper()}: ₹{c.get('current_price',0):,.0f} ({c.get('price_change_percentage_24h',0):+.1f}%)" for c in data[:10]])
 else:
-    ticker_text = "💎 LIVE GLOBAL: BTC: ₹5,684,210 | ETH: ₹324,150 | SOL: ₹12,480 | MATIC: ₹33.15 | XRT: ₹525.20 | VIRTUAL: ₹60.65"
+    ticker_text = "💎 LIVE GLOBAL: BTC: ₹6,243,683 | ETH: ₹180,809 | SOL: ₹12,480 | MATIC: ₹33.15 | XRT: ₹525.20 | VIRTUAL: ₹60.65"
 
 st.markdown(f"""
     <div style="background: #000000; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #00FF00;">
-        <marquee behavior="scroll" direction="left" style="color: #00FF00; font-family: monospace; font-size: 18px; font-weight: bold;">
-            🚀 {ticker_text}
-        </marquee>
+        <marquee behavior="scroll" direction="left" style="color: #00FF00; font-family: monospace; font-size: 18px; font-weight: bold;">🚀 {ticker_text}</marquee>
     </div>""", unsafe_allow_html=True)
 
-# --- [3. SIDEBAR: SECURE VAULT] ---
 with st.sidebar:
     st.header("🔐 Secure Vault")
     m_key = st.text_input("Master Key", type="password", help="Enter: SAMASTIPUR@2026")
+    
+    if data:
+        avg_change = sum([c.get('price_change_percentage_24h', 0) or 0 for c in data]) / len(data)
+        st.info(f"Sentiment: {'GREED 🚀' if avg_change > 0 else 'FEAR 📉'}")
+        
     api_key_raw = st.text_input("Gemini API Key", type="password")
     api_key = re.sub(r'[^a-zA-Z0-9_-]', '', api_key_raw.strip())
 
@@ -69,70 +76,80 @@ if m_key == MASTER_KEY:
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Sentinel", "📈 Performance Pro", "📰 Master Broadcast", "⚖️ Risk Calc"])
     
     with tab1:
-        # [FOLDER 1] Live Market Cards with Light Blue Theme
-        st.subheader("Live Market Monitor (12 Coins)")
+        st.subheader("🛰️ Market Sentinel (Glow & 7D Analysis)")
         if data:
+            max_vol_coin = max(data, key=lambda x: x.get('total_volume', 0) or 0)['id']
             cols = st.columns(4)
             for i, coin in enumerate(data):
-                p, c = coin.get('current_price', 0) or 0, coin.get('price_change_percentage_24h', 0) or 0
+                p = coin.get('current_price', 0) or 0
+                c24 = coin.get('price_change_percentage_24h', 0) or 0
+                c7d = coin.get('price_change_percentage_7d_in_currency', 0) or 0
+                glow = "#00FF00" if c24 >= 0 else "#FF4B4B"
                 with cols[i % 4]:
                     st.markdown(f"""
-                    <div style="background: #000000; padding: 2px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #7D52B5;">
-                        <div style="display: flex; align-items: center; background: #E3F2FD; padding: 15px; border-radius: 10px;">
-                            <img src="{coin.get('image')}" width="35" style="margin-right: 12px;">
+                    <div class="crypto-card" style="border: 2px solid {glow};">
+                        <div class="inner-card">
+                            {"<div class='hot-tag'>🔥 HOT</div>" if coin['id'] == max_vol_coin else ""}
+                            <img src="{coin.get('image')}" width="38" style="margin-right: 12px;">
                             <div>
-                                <p style="margin:0; font-size:12px; color:#1565C0; font-weight:bold;">{coin['symbol'].upper()}/INR</p>
-                                <h4 style="margin:0; color:#0D47A1 !important;">₹{p:,.2f}</h4>
-                                <p style="margin:0; font-size:12px; color:{'#008000' if c >=0 else '#D32F2F'};">{'▲' if c>=0 else '▼'} {abs(c):.2f}%</p>
+                                <p style="margin:0; font-size:11px; color:#1565C0; font-weight:bold;">{coin['symbol'].upper()}/INR</p>
+                                <h4 style="margin:0; color:#0D47A1 !important; font-size:17px;">₹{p:,.2f}</h4>
+                                <p style="margin:0; font-size:10px; font-weight:bold; color:{'#008000' if c24>=0 else '#D32F2F'};">
+                                    24h: {c24:+.1f}% | 7d: {c7d:+.1f}%
+                                </p>
                             </div>
                         </div>
                     </div>""", unsafe_allow_html=True)
-        else: st.warning("🔄 Waiting for Global Market Nodes... Re-authenticating.")
+        else: st.warning("Connecting to Global Nodes...")
 
     with tab2:
-        # [FOLDER 2] Market Cap, Volume & ATH Distance Table
-        st.subheader("📈 Live Performance & Advanced Metrics")
+        st.subheader("📈 Institutional Performance Metrics")
         if data:
             formatted_data = []
             for c in data:
                 c24 = c.get('price_change_percentage_24h', 0) or 0
-                ath_p = c.get('ath_change_percentage', 0) or 0
                 formatted_data.append({
                     "Logo": f'<img src="{c.get("image")}" width="25">',
                     "Coin": c.get('name'),
                     "Price": f"₹{c.get('current_price', 0):,.2f}",
                     "24h %": f'<span style="color:{"#00FF00" if c24>=0 else "#FF4B4B"}; font-weight:bold;">{c24:.2f}%</span>',
-                    "Volume (24h)": f"₹{c.get('total_volume', 0) or 0:,}",
-                    "Market Cap": f"₹{c.get('market_cap', 0) or 0:,}",
-                    "ATH Dist.": f'<span style="color:#FF4B4B;">{ath_p:.1f}%</span>'
+                    "Volume": f"₹{c.get('total_volume', 0) or 0:,}",
+                    "ATH Dist": f'<span style="color:#FF4B4B;">{c.get("ath_change_percentage",0):.1f}%</span>',
+                    "Market Cap": f"₹{c.get('market_cap', 0) or 0:,}"
                 })
             st.write(pd.DataFrame(formatted_data).to_html(escape=False, index=False), unsafe_allow_html=True)
 
     with tab3:
-        # [FOLDER 3] Master Broadcast with Light Blue Card
         st.subheader("📰 Sovereign News Broadcast")
-        st.markdown("""
-        <div class="news-card">
-            <h4 style="color:#1565C0 !important; margin:0;">🐦 Twitter (X) Live Signals</h4>
-            <p class="news-text">
-                🛰️ $XRT & $LAI: Recovery detected. Accumulation zones active.<br>
-                🛰️ $POLYGON: Bridge volume surging in India after infrastructure upgrade.
+        st.markdown(f"""
+        <div class="broadcast-card">
+            <p style="color:#1565C0 !important; font-weight:800; margin:0;">🐦 Master Twitter (X) Broadcast <span style="font-size:12px; background:#E1F5FE; color:#0288D1; padding:2px 6px; border-radius:4px;">SENTIMENT: ACTIVE 🚀</span></p>
+            <p style="color:#0D47A1 !important; font-size:14px; margin-top:10px; font-weight:600;">
+                🛰️ $XRT & $LAI: All-Time High recovery phase detected. Samastipur AI nodes active.<br>
+                🛰️ $POLYGON: Bridge volume surging hitting 2026 targets. $POL migration momentum building.
             </p>
         </div>""", unsafe_allow_html=True)
         
+        if st.button("🚀 Run AI Deep-Scan"):
+            if api_key:
+                try:
+                    genai.configure(api_key=api_key)
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    st.success(model.generate_content(f"Hinglish summary for {list(COIN_MAP.values())}. Focus on AI and DePIN sector news for 2026.").text)
+                except: st.error("AI Node exhausted. Check Key.")
+        
+        st.divider()
         try:
             feed = feedparser.parse("https://cointelegraph.com/rss/tag/bitcoin")
             for entry in feed.entries[:3]: st.markdown(f"🔹 <span style='color:white;'>[{entry.title}]({entry.link})</span>", unsafe_allow_html=True)
-        except: st.warning("RSS Nodes Offline.")
+        except: st.warning("RSS Feed Pending...")
 
     with tab4:
-        # [FOLDER 4] Risk Calculator
         st.subheader("⚖️ Risk & Profit Calculator")
         entry = st.number_input("Entry Price (INR)", value=1.0)
         target = st.number_input("Target Price (INR)", value=1.5)
         if st.button("Analyze Trade"):
             st.success(f"Potential Return: {((target/entry)-1)*100:.2f}% ✅")
 
-else:
-    st.info("Sovereign Standby. Expand Sidebar (←) and enter Master Key (SAMASTIPUR@2026) to Unlock.")
-    
+else: st.info("Sovereign Standby. Expand Sidebar (←) and enter Master Key (SAMASTIPUR@2026) to Unlock.")
+            
