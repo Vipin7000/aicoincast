@@ -152,4 +152,3 @@ if m_key == MASTER_KEY:
             st.success(f"Potential Return: {((target/entry)-1)*100:.2f}% ✅")
 
 else: st.info("Sovereign Standby. Expand Sidebar (←) and enter Master Key (SAMASTIPUR@2026) to Unlock.")
-            
