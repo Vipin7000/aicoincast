@@ -5,7 +5,7 @@ import google.generativeai as genai
 import feedparser
 import re
 
-# --- [1. SYSTEM CONFIG & FORCED SIDEBAR] ---
+# --- [1. SYSTEM CONFIG & AUTO-SIDEBAR] ---
 # initial_sidebar_state="expanded" ensures the password box is ALWAYS visible
 st.set_page_config(
     page_title="AiCoincast Terminal v19.9 Ultra", 
@@ -15,13 +15,12 @@ st.set_page_config(
 
 MASTER_KEY = "SAMASTIPUR@2026"
 
-# [HYBRID CSS] Royal Purple Theme + Sentinel Glow
+# Royal Purple Theme & UI Fixes
 st.markdown("""
     <style>
     .stApp { background-color: #2D1B4E !important; }
     h1, h2, h3, h4, p, span, li { color: white !important; }
     .stTabs [data-baseweb="tab-list"] { background-color: #1E1035 !important; border-radius: 10px; }
-    .stTabs [data-baseweb="tab"] { color: white !important; font-weight: bold; }
     
     /* Sidebar Styling for Password Entry */
     div[data-testid="stSidebar"] { background-color: #1E1035 !important; border-right: 1px solid #7D52B5; }
@@ -33,11 +32,10 @@ st.markdown("""
     
     /* Broadcast UI Fix */
     .broadcast-card { background: rgba(227, 242, 253, 0.95) !important; padding: 18px; border-radius: 15px; border-left: 8px solid #2196F3; border: 1px solid #BBDEFB; }
-    .broadcast-text { color: #0D47A1 !important; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
-# [ALGORITHM: VERIFIED 12-COIN MAPPING]
+# [MASTER ALGORITHM: 12-COIN MAPPING]
 COIN_MAP = {
     "bitcoin": "BTC", "ethereum": "ETH", "virtual-protocol": "VIRTUAL", 
     "griffin-2": "GRIFFIN", "v-ai-2": "VAI", "robonomics-network": "XRT", 
@@ -57,11 +55,11 @@ def fetch_pro_data():
 # --- [2. UI LOGIC & TICKER-SHIELD] ---
 data = fetch_pro_data()
 
-# [ALGORITHM FIX] Ticker-Shield prevents TypeError/Crash
+# [ALGORITHM FIX] Ticker-Shield prevents TypeError/Crash seen in snapshots
 ticker_content = "💎 LIVE GLOBAL: BTC: ₹5,684,210 | ETH: ₹324,150 | SOL: ₹12,480 | MATIC: ₹33.15 | XRT: ₹525.20"
 if isinstance(data, list) and len(data) > 0:
     try:
-        ticker_list = [f"{c.get('symbol','').upper()}: ₹{c.get('current_price',0):,.0f} ({c.get('price_change_percentage_24h',0):+.1f}%)" for c in data if c.get('symbol')]
+        ticker_list = [f"{c.get('symbol','').upper()}: ₹{c.get('current_price',0):,.0f}" for c in data if c.get('symbol')]
         if ticker_list: ticker_content = " | ".join(ticker_list[:10])
     except: pass
 
@@ -70,10 +68,10 @@ st.markdown(f"""
         <marquee behavior="scroll" direction="left" style="color: #00FF00; font-family: monospace; font-size: 18px; font-weight: bold;">🚀 {ticker_content}</marquee>
     </div>""", unsafe_allow_html=True)
 
-# --- [3. SIDEBAR: THE SECURE VAULT] ---
+# --- [3. SIDEBAR: THE PASSWORD VAULT (ALGORITHM FROM v19.8)] ---
 with st.sidebar:
     st.header("🔐 Secure Vault")
-    # This box will now always be visible on the left side
+    # This box will now ALWAYS be visible on the left side
     m_key = st.text_input("Enter Master Key", type="password", placeholder="SAMASTIPUR@2026")
     
     if data:
@@ -88,7 +86,7 @@ if m_key == MASTER_KEY:
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Sentinel", "📈 Performance Pro", "📰 Master Broadcast", "⚖️ Risk Calc"])
     
     with tab1:
-        st.subheader("🛰️ Market Sentinel (12 Coins Glow Active)")
+        st.subheader("🛰️ Market Sentinel (12 Coins Active)")
         if data:
             max_vol = max(data, key=lambda x: x.get('total_volume', 0) or 0).get('id', '')
             cols = st.columns(4)
@@ -111,7 +109,7 @@ if m_key == MASTER_KEY:
                             </div>
                         </div>
                     </div>""", unsafe_allow_html=True)
-        else: st.warning("🔄 Waiting for Data Nodes...")
+        else: st.warning("🔄 Re-syncing Global Market Nodes... Please wait.")
 
     with tab2:
         st.subheader("📈 Institutional Performance Metrics")
@@ -124,9 +122,10 @@ if m_key == MASTER_KEY:
         st.markdown("""
         <div class="broadcast-card">
             <h4 style="color:#1565C0 !important; margin:0;">🐦 Twitter (X) Live Signals</h4>
-            <p class="broadcast-text">🛰️ $XRT & $LAI: Recovery phase active. Samastipur AI nodes scaling.</p>
+            <p style="color:#0D47A1 !important; font-size:14px; font-weight:bold;">🛰️ $XRT & $LAI: Recovery detected. Samastipur AI nodes active.</p>
         </div>""", unsafe_allow_html=True)
 
 else:
-    st.info("⚠️ Master Key Required. Use the Sidebar on the left to unlock.")
-                          
+    # Sidebar hint when locked
+    st.info("⚠️ Master Key Required. Use the Sidebar on the left (←) to unlock (SAMASTIPUR@2026).")
+    
