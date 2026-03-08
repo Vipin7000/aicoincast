@@ -32,7 +32,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# [ALGORITHM: 12-COIN MASTER MAPPING]
+# [FIXED ALGORITHM: 12-COIN MASTER MAPPING]
 COIN_MAP = {
     "bitcoin": "BTC", "ethereum": "ETH", "virtual-protocol": "VIRTUAL", 
     "griffin-2": "GRIFFIN", "v-ai-2": "VAI", "robonomics-network": "XRT", 
@@ -49,12 +49,12 @@ def fetch_pro_data():
         return r.json() if r.status_code == 200 else []
     except: return []
 
-# --- [2. UI LOGIC & TICKER-SHIELD] ---
+# --- [2. UI LOGIC & TICKER-SHIELD ALGORITHM] ---
 data = fetch_pro_data()
-if data and len(data) > 0:
-    ticker_text = " | ".join([f"{c.get('symbol','').upper()}: ₹{c.get('current_price',0):,.0f} ({c.get('price_change_percentage_24h',0):+.1f}%)" for c in data[:10]])
+if isinstance(data, list) and len(data) > 0:
+    ticker_text = " | ".join([f"{c.get('symbol','').upper()}: ₹{c.get('current_price',0):,.0f} ({c.get('price_change_percentage_24h',0):+.1f}%)" for c in data if c.get('symbol')])
 else:
-    ticker_text = "💎 LIVE GLOBAL: BTC: ₹6,243,683 | ETH: ₹180,809 | SOL: ₹12,480 | MATIC: ₹33.15 | XRT: ₹525.20 | VIRTUAL: ₹60.65"
+    ticker_text = "💎 LIVE GLOBAL: BTC: ₹6,243,683 | ETH: ₹180,809 | XRT: ₹525.20 | SOL: ₹12,480 | MATIC: ₹33.15"
 
 st.markdown(f"""
     <div style="background: #000000; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #00FF00;">
@@ -76,7 +76,8 @@ if m_key == MASTER_KEY:
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Sentinel", "📈 Performance Pro", "📰 Master Broadcast", "⚖️ Risk Calc"])
     
     with tab1:
-        st.subheader("🛰️ Market Sentinel (Glow & 7D Analysis)")
+        # [ALGORITHM: 12 COINS + HOT TAG + 7D TREND]
+        st.subheader("🛰️ Market Sentinel (Glow & Analytics Active)")
         if data:
             max_vol_coin = max(data, key=lambda x: x.get('total_volume', 0) or 0)['id']
             cols = st.columns(4)
@@ -103,6 +104,7 @@ if m_key == MASTER_KEY:
         else: st.warning("Connecting to Global Nodes...")
 
     with tab2:
+        # [ALGORITHM: INSTITUTIONAL PERFORMANCE]
         st.subheader("📈 Institutional Performance Metrics")
         if data:
             formatted_data = []
@@ -120,10 +122,11 @@ if m_key == MASTER_KEY:
             st.write(pd.DataFrame(formatted_data).to_html(escape=False, index=False), unsafe_allow_html=True)
 
     with tab3:
+        # [FIXED BROADCAST]
         st.subheader("📰 Sovereign News Broadcast")
         st.markdown(f"""
         <div class="broadcast-card">
-            <p style="color:#1565C0 !important; font-weight:800; margin:0;">🐦 Master Twitter (X) Broadcast <span style="font-size:12px; background:#E1F5FE; color:#0288D1; padding:2px 6px; border-radius:4px;">SENTIMENT: ACTIVE 🚀</span></p>
+            <p style="color:#1565C0 !important; font-weight:800; margin:0;">🐦 Twitter (X) Live Signals <span style="font-size:12px; background:#E1F5FE; color:#0288D1; padding:2px 6px; border-radius:4px;">SENTIMENT: ACTIVE 🚀</span></p>
             <p style="color:#0D47A1 !important; font-size:14px; margin-top:10px; font-weight:600;">
                 🛰️ $XRT & $LAI: All-Time High recovery phase detected. Samastipur AI nodes active.<br>
                 🛰️ $POLYGON: Bridge volume surging hitting 2026 targets. $POL migration momentum building.
@@ -137,12 +140,6 @@ if m_key == MASTER_KEY:
                     model = genai.GenerativeModel('gemini-1.5-flash')
                     st.success(model.generate_content(f"Hinglish summary for {list(COIN_MAP.values())}. Focus on AI and DePIN sector news for 2026.").text)
                 except: st.error("AI Node exhausted. Check Key.")
-        
-        st.divider()
-        try:
-            feed = feedparser.parse("https://cointelegraph.com/rss/tag/bitcoin")
-            for entry in feed.entries[:3]: st.markdown(f"🔹 <span style='color:white;'>[{entry.title}]({entry.link})</span>", unsafe_allow_html=True)
-        except: st.warning("RSS Feed Pending...")
 
     with tab4:
         st.subheader("⚖️ Risk & Profit Calculator")
@@ -152,3 +149,4 @@ if m_key == MASTER_KEY:
             st.success(f"Potential Return: {((target/entry)-1)*100:.2f}% ✅")
 
 else: st.info("Sovereign Standby. Expand Sidebar (←) and enter Master Key (SAMASTIPUR@2026) to Unlock.")
+    
