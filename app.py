@@ -6,15 +6,16 @@ import feedparser
 import re
 
 # --- [1. SYSTEM CONFIG & AUTO-SIDEBAR] ---
+# initial_sidebar_state="expanded" ensures the password option is always visible
 st.set_page_config(
     page_title="AiCoincast Terminal v19.9 Ultra", 
     layout="wide", 
-    initial_sidebar_state="expanded" # Hamesha password box dikhega
+    initial_sidebar_state="expanded"
 )
 
 MASTER_KEY = "SAMASTIPUR@2026"
 
-# Royal Purple Theme & Institutional CSS
+# Force Royal Purple Page Theme & Custom CSS
 st.markdown("""
     <style>
     .stApp { background-color: #2D1B4E !important; }
@@ -22,15 +23,17 @@ st.markdown("""
     .stTabs [data-baseweb="tab-list"] { background-color: #1E1035 !important; border-radius: 10px; }
     .stTabs [data-baseweb="tab"] { color: white !important; font-weight: bold; }
     
+    /* Master Key Box Styling in Sidebar */
+    div[data-testid="stSidebar"] { background-color: #1E1035 !important; border-right: 1px solid #7D52B5; }
+    
     /* Folder 1: Elite Glow Cards */
     .crypto-card { background: #000000; padding: 2px; border-radius: 12px; margin-bottom: 12px; transition: 0.3s; }
     .inner-card { display: flex; align-items: center; background: #E3F2FD; padding: 15px; border-radius: 10px; position: relative; }
     .hot-tag { position: absolute; top: 5px; right: 5px; background: #FF4B4B; color: white !important; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
     
-    /* Table & Broadcast UI */
-    .broadcast-card { background: rgba(227, 242, 253, 0.95) !important; padding: 20px; border-radius: 15px; border-left: 8px solid #2196F3; border: 1px solid #BBDEFB; }
-    table { background-color: #1E1035 !important; color: white !important; width: 100%; border-radius: 10px; }
-    th { background-color: #7D52B5 !important; color: white !important; padding: 12px; }
+    /* Broadcast Glass-morphism UI */
+    .broadcast-card { background: rgba(227, 242, 253, 0.95) !important; padding: 18px; border-radius: 15px; border-left: 8px solid #2196F3; margin-bottom: 20px; border: 1px solid #BBDEFB; }
+    .broadcast-text { color: #0D47A1 !important; font-weight: bold; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -54,30 +57,33 @@ def fetch_pro_data():
 # --- [2. UI LOGIC & TICKER-SHIELD] ---
 data = fetch_pro_data()
 
-# Ticker Logic with Fallback Shield
+# [FIX] Ticker-Shield: Ensures no crash if data is missing
+ticker_content = "💎 LIVE GLOBAL: BTC: ₹5,684,210 | ETH: ₹324,150 | SOL: ₹12,480 | MATIC: ₹33.15 | XRT: ₹525.20"
 if isinstance(data, list) and len(data) > 0:
-    ticker_text = " | ".join([f"{c.get('symbol','').upper()}: ₹{c.get('current_price',0):,.0f} ({c.get('price_change_percentage_24h',0):+.1f}%)" for c in data if c.get('symbol')])
-else:
-    ticker_text = "💎 LIVE GLOBAL: BTC: ₹5,684,210 | ETH: ₹324,150 | SOL: ₹12,480 | MATIC: ₹33.15 | XRT: ₹525.20"
+    try:
+        ticker_list = [f"{c.get('symbol','').upper()}: ₹{c.get('current_price',0):,.0f} ({c.get('price_change_percentage_24h',0):+.1f}%)" for c in data if c.get('symbol')]
+        if ticker_list: ticker_content = " | ".join(ticker_list[:10])
+    except: pass
 
 st.markdown(f"""
     <div style="background: #000000; padding: 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #00FF00;">
-        <marquee behavior="scroll" direction="left" style="color: #00FF00; font-family: monospace; font-size: 18px; font-weight: bold;">🚀 {ticker_text}</marquee>
+        <marquee behavior="scroll" direction="left" style="color: #00FF00; font-family: monospace; font-size: 18px; font-weight: bold;">🚀 {ticker_content}</marquee>
     </div>""", unsafe_allow_html=True)
 
-# --- [3. SIDEBAR: SECURE VAULT] ---
+# --- [3. SIDEBAR: THE PASSWORD ADD OPTION] ---
 with st.sidebar:
     st.header("🔐 Secure Vault")
-    m_key = st.text_input("Master Key", type="password", placeholder="SAMASTIPUR@2026")
+    # Master Key option is now explicitly placed here
+    m_key = st.text_input("Enter Master Key", type="password", placeholder="SAMASTIPUR@2026")
     
     if data:
         avg = sum([c.get('price_change_percentage_24h', 0) or 0 for c in data]) / len(data)
-        st.info(f"Market Mood: {'GREED 🚀' if avg > 0 else 'FEAR 📉'}")
+        st.info(f"Market Sentiment: {'GREED 🚀' if avg > 0 else 'FEAR 📉'}")
         
     api_key_raw = st.text_input("Gemini API Key", type="password")
     api_key = re.sub(r'[^a-zA-Z0-9_-]', '', api_key_raw.strip())
 
-# --- [4. MAIN TERMINAL] ---
+# --- [4. MAIN TERMINAL LOGIC] ---
 if m_key == MASTER_KEY:
     tab1, tab2, tab3, tab4 = st.tabs(["📊 Market Sentinel", "📈 Performance Pro", "📰 Master Broadcast", "⚖️ Risk Calc"])
     
@@ -124,29 +130,19 @@ if m_key == MASTER_KEY:
 
     with tab3:
         st.subheader("📰 Sovereign News Broadcast")
-        st.markdown(f"""
+        st.markdown("""
         <div class="broadcast-card">
-            <p style="color:#1565C0 !important; font-weight:800; margin:0;">🐦 Twitter (X) Live Signals</p>
-            <p style="color:#0D47A1 !important; font-size:14px; margin-top:10px; font-weight:600;">
-                🛰️ $XRT & $LAI: All-Time High recovery detected. Samastipur nodes scaling.<br>
-                🛰️ $POLYGON: Bridge volume surging hitting 2026 targets.
-            </p>
+            <h4 style="color:#1565C0 !important; margin:0;">🐦 Twitter (X) Live Signals</h4>
+            <p class="broadcast-text">🛰️ $XRT & $LAI: Recovery phase detected. Samastipur AI nodes scaling.</p>
         </div>""", unsafe_allow_html=True)
         if st.button("🚀 Run AI Deep-Scan"):
             if api_key:
                 try:
                     genai.configure(api_key=api_key)
                     model = genai.GenerativeModel('gemini-1.5-flash')
-                    st.success(model.generate_content(f"Hinglish news for {list(COIN_MAP.values())}").text)
+                    st.success(model.generate_content("Hinglish news for BTC, ETH and AI coins in 2026.").text)
                 except: st.error("AI Node Offline.")
 
-    with tab4:
-        st.subheader("⚖️ Risk Calculator")
-        entry = st.number_input("Entry Price (INR)", value=1.0)
-        target = st.number_input("Target Price (INR)", value=1.5)
-        if st.button("Analyze ROI"):
-            st.success(f"Potential Return: {((target/entry)-1)*100:.2f}% ✅")
-
 else:
-    st.info("⚠️ Master Key Required. Use the Sidebar on the left to unlock (SAMASTIPUR@2026).")
-    
+    st.info("⚠️ Master Key Required. Expand Sidebar (←) and enter SAMASTIPUR@2026.")
+                   
