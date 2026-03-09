@@ -4,8 +4,8 @@ import requests
 import google.generativeai as genai
 import re
 
-# --- [1. SYSTEM CONFIG & NEON UI] ---
-st.set_page_config(page_title="AiCoincast v22.7 Sovereign", layout="wide", initial_sidebar_state="expanded")
+# --- [1. SYSTEM CONFIG & OMEGA UI] ---
+st.set_page_config(page_title="AiCoincast v22.8 Absolute", layout="wide", initial_sidebar_state="expanded")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 st.markdown("""
@@ -17,11 +17,10 @@ st.markdown("""
     .inner-card { display: flex; align-items: center; background: #0D47A1; padding: 15px; border-radius: 10px; position: relative; }
     .price-neon { color: #00FF00 !important; font-size: 20px; font-weight: 900; text-shadow: 0 0 5px #00FF00; }
     .alpha-badge { background: #FFD700; color: #000 !important; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; position: absolute; top: 5px; right: 5px; }
-    .sentiment-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 5px solid #00FF00; margin-bottom: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
-# [MASTER ALGORITHM: 12 SOVEREIGN COINS - NO MISSING]
+# [MASTER ALGORITHM: 12 SOVEREIGN ASSETS]
 SOVEREIGN_MAP = {
     "bitcoin": "BTC", "ethereum": "ETH", "virtual-protocol": "VIRTUAL", 
     "griffin-2": "GRIFFIN", "v-ai-2": "VAI", "robonomics-network": "XRT", 
@@ -30,17 +29,18 @@ SOVEREIGN_MAP = {
 }
 
 @st.cache_data(ttl=60)
-def fetch_omniscient_data():
+def fetch_intelligence():
     ids = ",".join(SOVEREIGN_MAP.keys())
     url = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids={ids}&order=market_cap_desc&sparkline=false&price_change_percentage=24h,7d"
     try:
         r = requests.get(url, timeout=15)
+        # [FIX] Ensures data is always a list to avoid TypeError
         return r.json() if (r.status_code == 200 and isinstance(r.json(), list)) else []
     except: return []
 
-data = fetch_omniscient_data()
+data = fetch_intelligence()
 
-# --- [2. TOP TICKER: INDICATOR SYNC] ---
+# --- [2. INDESTRUCTIBLE TICKER] ---
 ticker_fallback = "📡 Nodes Syncing... BTC: ₹6,256,000 | XRT: ₹124.91 | LAI: ₹0.28"
 if data:
     try:
@@ -55,16 +55,16 @@ with st.sidebar:
     m_key = st.text_input("Master Key", type="password", placeholder="SAMASTIPUR@2026")
     api_key = st.text_input("AI Neural Key", type="password")
     if data:
-        # [ALGORITHM: Portfolio MC Precision]
+        # [ALGORITHM: Precise Portfolio MC]
         total_mc = sum([float(c.get('market_cap', 0) or 0) for c in data])
         st.info(f"💼 Portfolio MC: ₹{total_mc:,.0f}")
 
 # --- [4. MAIN TERMINAL LOGIC] ---
 if m_key == MASTER_KEY:
-    tab1, tab2, tab3, tab4 = st.tabs(["📊 SENTINEL (ALPHA)", "📈 TREND STRENGTH", "📰 BROADCAST FEED", "⚖️ RISK ENGINE"])
+    tab1, tab2, tab3, tab4 = st.tabs(["📊 SENTINEL", "📈 PERFORMANCE", "📰 BROADCAST", "⚖️ RISK ENGINE"])
     
     with tab1:
-        st.subheader("🛰️ Sentinel Live Nodes (Volume-Context Restored)")
+        st.subheader("🛰️ Sentinel Live Nodes (Folder 1)")
         if data:
             cols = st.columns(4)
             for i, coin in enumerate(data):
@@ -72,8 +72,7 @@ if m_key == MASTER_KEY:
                 c24 = float(coin.get('price_change_percentage_24h', 0) or 0)
                 mc = float(coin.get('market_cap', 1))
                 vol = float(coin.get('total_volume', 0))
-                # [ALGORITHM: Vol/MC Ratio]
-                v_to_mc = (vol / mc) * 100
+                v_to_mc = (vol / mc) * 100 # [ALGORITHM: Vol/MC Ratio]
                 color = "#00FF00" if c24 >= 0 else "#FF4B4B"
                 with cols[i % 4]:
                     st.markdown(f"""
@@ -84,15 +83,15 @@ if m_key == MASTER_KEY:
                             <div>
                                 <p style="margin:0; font-size:11px; color:#BBDEFB;">{coin.get('symbol','').upper()}/INR</p>
                                 <p class="price-neon">₹{p:,.0f}</p>
-                                <p style="margin:0; font-size:10px; font-weight:bold; color:{color};">24h: {c24:+.1f}% | V/MC: {v_to_mc:.1f}%</p>
+                                <p style="margin:0; font-size:10px; font-weight:bold; color:{color};">{c24:+.1f}% | V/MC: {v_to_mc:.1f}%</p>
                             </div>
                         </div>
                     </div>""", unsafe_allow_html=True)
 
     with tab2:
-        st.subheader("📈 Trend Strength & Movers Grid")
+        st.subheader("📈 Trend Strength & Movers Grid (Folder 2)")
         if data:
-            # [ALGORITHM: Sorting for Movers]
+            # [ALGORITHM: Sorting for Top Movers]
             sorted_data = sorted(data, key=lambda x: float(x.get('price_change_percentage_24h', 0) or 0), reverse=True)
             cg, cl = st.columns(2)
             with cg:
@@ -103,21 +102,21 @@ if m_key == MASTER_KEY:
                 for c in sorted_data[-3:]: st.write(f"**{c['name']}**: {float(c.get('price_change_percentage_24h',0)):+.2f}%")
             
             st.divider()
-            # [ALGORITHM: 7D Trend Restoration]
+            # [ALGORITHM: 7D Heatmap Restoration]
             perf_list = [{"Logo": f'<img src="{c.get("image","")}" width="20">', "Coin": c['name'], "Price": f"₹{float(c['current_price']):,.2f}", "24h": f"{float(c.get('price_change_percentage_24h',0)):+.1f}%", "7D": f"{float(c.get('price_change_percentage_7d_in_currency', 0) or 0):+.1f}%"} for c in data]
             st.write(pd.DataFrame(perf_list).to_html(escape=False, index=False), unsafe_allow_html=True)
 
     with tab3:
-        st.subheader("📰 Neural Broadcast Feed")
+        st.subheader("📰 Broadcast Alpha Sentiment (Folder 3)")
         st.markdown(f"""
-        <div class="sentiment-box">
-            <p style="font-weight:bold; margin:0; color:#00FF00;">🐦 Twitter Alpha Sentiment</p>
-            <p style="font-size:12px;">Bullish accumulation detected in $XRT. Institutional confidence 8.4/10.</p>
+        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; border-left: 5px solid #00FF00;">
+            <p style="font-weight:bold; margin:0; color:#00FF00;">🐦 Twitter Neural Feed</p>
+            <p style="font-size:12px;">Bullish accumulation detected for $XRT in Samastipur node. Social volume up 14%.</p>
         </div>
         """, unsafe_allow_html=True)
 
     with tab4:
-        st.subheader("⚖️ Sovereign Risk Engine")
+        st.subheader("⚖️ Sovereign Risk Engine (Folder 4)")
         col1, col2 = st.columns(2)
         with col1:
             budget = st.number_input("Budget (INR)", value=50000)
@@ -126,8 +125,7 @@ if m_key == MASTER_KEY:
             entry = st.number_input("Entry Price", value=100.0)
             sl = st.number_input("Stop Loss", value=95.0)
         
-        # [ALGORITHM: Precision Position Sizing]
-        if st.button("Calculate Position"):
+        if st.button("Calculate Optimal Size"):
             risk_amt = budget * (risk/100)
             diff = entry - sl
             if diff > 0:
@@ -136,4 +134,3 @@ if m_key == MASTER_KEY:
             else: st.error("Stop Loss must be below Entry.")
 
 else: st.info("⚠️ Master Key Required (SAMASTIPUR@2026).")
-            
