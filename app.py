@@ -134,3 +134,4 @@ if m_key == MASTER_KEY:
             else: st.error("Stop Loss must be below Entry.")
 
 else: st.info("⚠️ Master Key Required (SAMASTIPUR@2026).")
+                
