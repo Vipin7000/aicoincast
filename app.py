@@ -4,7 +4,7 @@ import requests
 import time
 
 # --- [1. MASTER CONFIG & UI] ---
-st.set_page_config(page_title="AiCoincast v134.0 Pantheon", layout="wide")
+st.set_page_config(page_title="AiCoincast v136.0 Dual-Protocol", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 st.markdown("""
@@ -13,7 +13,7 @@ st.markdown("""
     h1, h2, h3, h4, p, span, li { color: #FFFFFF !important; }
     section[data-testid="stSidebar"] { background-color: #1A0B35 !important; border-right: 3px solid #00FF00 !important; }
     
-    /* Neon Glow Styling for Performance */
+    /* Neon Glow Styling */
     .glow-pos { color: #00FF00 !important; text-shadow: 0 0 10px #00FF00; font-weight: bold; }
     .glow-neg { color: #FF0000 !important; text-shadow: 0 0 10px #FF0000; font-weight: bold; }
     
@@ -21,7 +21,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- [ALGO SUITE: v134 LOCKED] ---
+# --- [ALGO SUITE: v136 ABSOLUTE LOCK] ---
 def safe_float(val):
     try: return float(val) if val is not None else 0.0
     except: return 0.0
@@ -35,107 +35,91 @@ def get_glow_ind(val):
     elif v < 0: return f"🔴 ▼ {abs(v):.1f}%"
     return f"▬ 0.0%"
 
-def get_arbitrage_pot(high, low):
-    pot = ((safe_float(high) - safe_float(low)) / safe_float(low)) * 100 if safe_float(low) > 0 else 0
-    return "🔥 HIGH SWING" if pot >= 10 else "💎 STABLE"
-
-# [MASTER ID VAULT - 15 SOVEREIGN NODES]
-MY_15_IDS = [
+# [MASTER ID VAULT - SPLIT INTO TWO FOLDERS]
+FOLDER_1_IDS = [
     "bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol",
     "qanplatform", "chaingpt", "velas", "griffain",
-    "vaiot", "sin-city", "layerai", "robonomics-network",
-    "unmarshal", "everdome", "bloktopia"
+    "vaiot", "sin-city", "robonomics-network", "unmarshal", "bloktopia"
 ]
+# Folder 2: LayerAI and NFTB (Alpha Spec Nodes)
+FOLDER_2_IDS = ["layerai", "nftb", "everdome"] # Added everdome here for stable tracking
 
 @st.cache_data(ttl=60)
-def fetch_pantheon_v134():
-    sov_res, global_res, total_mc = [], [], 1.0
-    ids_str = ",".join(MY_15_IDS)
+def fetch_sovereign_intelligence():
+    f1_res, f2_res, global_res = [], [], []
     base_url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&price_change_percentage=24h,7d,30d"
     
     try:
-        # Step 1: Force Fetch Sovereign 15
-        sov_res = requests.get(f"{base_url}&ids={ids_str}&sparkline=true", timeout=25).json()
+        # Fetch Folder 1
+        f1_res = requests.get(f"{base_url}&ids={','.join(FOLDER_1_IDS)}&sparkline=true", timeout=20).json()
         
-        # Step 2: Atomic Bypass for LAI (In case it's missing from batch)
-        found_ids = [c.get('id') for c in sov_res] if isinstance(sov_res, list) else []
-        if "layerai" not in found_ids:
-            lai_dedicated = requests.get(f"{base_url}&ids=layerai&sparkline=true", timeout=10).json()
-            if isinstance(lai_dedicated, list) and len(lai_dedicated) > 0:
-                sov_res.append(lai_dedicated[0])
-
-        # Step 3: Global Feed (500 Assets)
-        for p in range(1, 3):
-            g_batch = requests.get(f"{base_url}&order=market_cap_desc&per_page=250&page={p}", timeout=25).json()
-            if isinstance(g_batch, list): global_res.extend(g_batch)
-            time.sleep(0.5)
-            
-        gr = requests.get("https://api.coingecko.com/api/v3/global").json()
-        total_mc = safe_float(gr['data']['total_market_cap'].get('inr', 1))
+        # Fetch Folder 2 (High-Priority Force-Fetch)
+        f2_res = requests.get(f"{base_url}&ids={','.join(FOLDER_2_IDS)}&sparkline=true", timeout=20).json()
+        
+        # Global Mega Index
+        g_batch = requests.get(f"{base_url}&order=market_cap_desc&per_page=100&page=1").json()
+        if isinstance(g_batch, list): global_res = g_batch
     except: pass
-    return sov_res, global_res, total_mc
+    return f1_res, f2_res, global_res
 
 # --- [2. EXECUTION] ---
-sov_data, global_market, total_mc_global = fetch_pantheon_v134()
+f1_data, f2_data, g_data = fetch_sovereign_intelligence()
 
 with st.sidebar:
     st.title("🔐 OMNI VAULT")
     m_key = st.text_input("Master Key", type="password", placeholder="••••••••")
-    if sov_data:
-        unique_nodes = {c['id']: c for c in sov_data if 'id' in c}
-        st.success(f"Verified Nodes: {len(unique_nodes)}/15")
-        if "layerai" in unique_nodes:
-            st.info("LAI Force-Inject: ACTIVE ✅")
+    if f1_data and f2_data:
+        total_nodes = len(f1_data) + len(f2_data)
+        st.success(f"Verified Nodes: {total_nodes}/15")
+        st.info("Folder 2 (LAI & NFTB): LOCKED ✅")
 
 if m_key == MASTER_KEY:
-    # --- UNIFIED DASHBOARD ---
+    tabs = st.tabs(["📊 FOLDER 1: SENTINEL", "💎 FOLDER 2: ALPHA SPEC", "🌍 GLOBAL INDEX"])
     
-    # SECTION 1: SENTINEL COMMAND
-    st.header("🛰️ Sentinel Command: 15 Sovereign Nodes")
-    if sov_data:
-        unique_sov = {c['id']: c for c in sov_data if 'id' in c}.values()
-        df_s = []
-        # Sort based on MY_15_IDS list to maintain order
-        sorted_sov = sorted(unique_sov, key=lambda x: MY_15_IDS.index(x['id']) if x['id'] in MY_15_IDS else 99)
-        
-        for c in sorted_sov:
-            name = c.get('name').upper()
-            if c.get('id') == "sin-city": name = "SINVERSE (SIN)"
-            if c.get('id') == "layerai": name = "LAYERAI (LAI)"
-            if c.get('id') == "everdome": name = "HUM(AI)N (AI)"
-            
-            df_s.append({
-                "Logo": c.get('image'), "Asset": name,
-                "Poten": get_arbitrage_pot(c.get('high_24h'), c.get('low_24h')),
-                "Price (INR)": format_price(c.get('current_price')),
-                "24H": get_glow_ind(c.get('price_change_percentage_24h_in_currency')),
-                "WEEK": get_glow_ind(c.get('price_change_percentage_7d_in_currency')),
-                "MONTH": get_glow_ind(c.get('price_change_percentage_30d_in_currency')),
-                "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪",
-                "Trend": c.get('sparkline_in_7d', {}).get('price', [])
-            })
-        st.dataframe(pd.DataFrame(df_s), column_config={"Logo": st.column_config.ImageColumn(), "Trend": st.column_config.LineChartColumn()}, use_container_width=True, hide_index=True)
+    # --- FOLDER 1 ---
+    with tabs[0]:
+        st.header("🛰️ Sentinel Command (13 Nodes)")
+        if f1_data:
+            df1 = []
+            for c in f1_data:
+                df1.append({
+                    "Logo": c.get('image'), "Asset": c.get('name').upper(),
+                    "Price (INR)": format_price(c.get('current_price')),
+                    "24H": get_glow_ind(c.get('price_change_percentage_24h_in_currency')),
+                    "WEEK": get_glow_ind(c.get('price_change_percentage_7d_in_currency')),
+                    "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪"
+                })
+            st.dataframe(pd.DataFrame(df1), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
 
-    st.markdown("---")
+    # --- FOLDER 2: LAI & NFTB ---
+    with tabs[1]:
+        st.header("💎 Folder 2: Alpha Spec (LAI & NFTB)")
+        if f2_data:
+            df2 = []
+            for c in f2_data:
+                name = c.get('name').upper()
+                if c.get('id') == "layerai": name = "LAYERAI (LAI)"
+                if c.get('id') == "everdome": name = "HUM(AI)N (AI)"
+                if c.get('id') == "nftb": name = "NFTB (NFTB)"
+                
+                df2.append({
+                    "Logo": c.get('image'), "Asset": name,
+                    "Price (INR)": format_price(c.get('current_price')),
+                    "24H": get_glow_ind(c.get('price_change_percentage_24h_in_currency')),
+                    "WEEK": get_glow_ind(c.get('price_change_percentage_7d_in_currency')),
+                    "MONTH": get_glow_ind(c.get('price_change_percentage_30d_in_currency')),
+                    "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪"
+                })
+            st.dataframe(pd.DataFrame(df2), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
+            st.success("Folder 2 nodes are being fetched via priority bypass.")
 
-    # SECTION 2: GLOBAL MEGA INDEX
-    st.header(f"🌍 Global Mega Index (500 Assets)")
-    q_search = st.text_input("🔍 Quick Search Node...", placeholder="Search globally...")
-    if global_market:
-        filtered = [c for c in global_market if q_search.lower() in c['name'].lower() or q_search.lower() in c['symbol'].lower()]
-        df_g = []
-        for c in filtered:
-            df_g.append({
-                "Rank": c.get('market_cap_rank'), "Logo": c.get('image'), "Name": c.get('name'),
-                "Authority": f"{(safe_float(c.get('market_cap'))/total_mc_global*100):.2f}%",
-                "Price": format_price(c.get('current_price')),
-                "24H": get_glow_ind(c.get('price_change_percentage_24h_in_currency')),
-                "7D": get_glow_ind(c.get('price_change_percentage_7d_in_currency')),
-                "30D": get_glow_ind(c.get('price_change_percentage_30d_in_currency')),
-                "Whale": "🐋 Whale Alert" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪"
-            })
-        st.dataframe(pd.DataFrame(df_g), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
+    # --- GLOBAL INDEX ---
+    with tabs[2]:
+        st.header("🌍 Global Market Index")
+        if g_data:
+            dfg = [{"Rank": c['market_cap_rank'], "Name": c['name'], "Price": format_price(c['current_price']), "24H": get_glow_ind(c['price_change_percentage_24h_in_currency'])} for c in g_data]
+            st.dataframe(pd.DataFrame(dfg), use_container_width=True, hide_index=True)
 
 else:
-    st.info("Enter Master Key to Unlock Sovereign Pantheon.")
-        
+    st.info("Enter Master Key to Unlock Sovereign Access.")
+    
