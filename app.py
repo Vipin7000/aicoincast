@@ -4,7 +4,7 @@ import requests
 import time
 
 # --- [1. MASTER CONFIG & UI] ---
-st.set_page_config(page_title="AiCoincast v127.0 Pantheon", layout="wide")
+st.set_page_config(page_title="AiCoincast v129.0 Pantheon", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 st.markdown("""
@@ -13,7 +13,7 @@ st.markdown("""
     h1, h2, h3, h4, p, span, li { color: #FFFFFF !important; }
     section[data-testid="stSidebar"] { background-color: #1A0B35 !important; border-right: 3px solid #00FF00 !important; }
     
-    /* Neon Glow Styling */
+    /* Neon Glow Styling for Performance */
     .glow-pos { color: #00FF00 !important; text-shadow: 0 0 12px #00FF00; font-weight: bold; }
     .glow-neg { color: #FF0000 !important; text-shadow: 0 0 12px #FF0000; font-weight: bold; }
     
@@ -21,7 +21,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- [ALGO SUITE: v127 LOCKED] ---
+# --- [ALGO SUITE: v129 LOCKED] ---
 def safe_float(val):
     try: return float(val) if val is not None else 0.0
     except: return 0.0
@@ -39,7 +39,7 @@ def get_arbitrage_pot(high, low):
     pot = ((safe_float(high) - safe_float(low)) / safe_float(low)) * 100 if safe_float(low) > 0 else 0
     return "🔥 HIGH SWING" if pot >= 10 else "💎 STABLE"
 
-# [MASTER ID VAULT - 15 SOVEREIGN NODES]
+# [MASTER ID VAULT - 15 NODES - EVERDOME REBRANDED & LAI LOCKED]
 MY_15_IDS = [
     "bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol",
     "qanplatform", "chaingpt", "velas", "griffain",
@@ -57,7 +57,7 @@ def fetch_pantheon_intelligence():
         # Layer 1: Force Fetch Sovereign 15
         sov_res = requests.get(f"{base_url}&ids={ids_str}&sparkline=true", timeout=25).json()
         
-        # Layer 2: Global Mega Index (Multi-page buffering)
+        # Layer 2: Global Mega Index (1000 Assets)
         for p in range(1, 5):
             g_batch = requests.get(f"{base_url}&order=market_cap_desc&per_page=250&page={p}", timeout=25).json()
             if isinstance(g_batch, list): global_res.extend(g_batch)
@@ -76,17 +76,20 @@ with st.sidebar:
     m_key = st.text_input("Master Key", type="password", placeholder="••••••••")
     if sov_data:
         st.success(f"Verified Nodes: {len(sov_data)}/15")
-        if "layerai" in [c.get('id') for c in sov_data]:
-            st.info("LAI Position Locked ✅")
+        found_ids = [c.get('id') for c in sov_data]
+        if "everdome" in found_ids: st.info("HUM(AI)N Node Active ✅")
+        if "layerai" in found_ids: st.info("LAI Node Locked ✅")
 
 if m_key == MASTER_KEY:
-    # --- SECTION 1: SENTINEL ALPHA (PRIORITY 15) ---
+    # SECTION 1: SENTINEL COMMAND (TOP 15)
     st.header("🛰️ Sentinel Command: 15 Sovereign Nodes")
     if sov_data:
         df_s = []
         for c in sov_data:
             name = c.get('name').upper()
             if c.get('id') == "sin-city": name = "SINVERSE (SIN)"
+            if c.get('id') == "layerai": name = "LAYERAI (LAI)"
+            if c.get('id') == "everdome": name = "HUM(AI)N (AI)" # Rebranded Name
             
             df_s.append({
                 "Logo": c.get('image'), "Asset": name,
@@ -102,9 +105,9 @@ if m_key == MASTER_KEY:
 
     st.markdown("---")
 
-    # --- SECTION 2: GLOBAL MEGA INDEX ---
+    # SECTION 2: GLOBAL MEGA INDEX
     st.header(f"🌍 Global Mega Index ({len(global_market)} Assets)")
-    q_search = st.text_input("🔍 Quick Search Node...", placeholder="Search symbols or names globally...")
+    q_search = st.text_input("🔍 Quick Search Node...", placeholder="Search globally...")
     if global_market:
         filtered = [c for c in global_market if q_search.lower() in c['name'].lower() or q_search.lower() in c['symbol'].lower()]
         df_g = []
@@ -122,3 +125,4 @@ if m_key == MASTER_KEY:
 
 else:
     st.info("Enter Master Key to Unlock Sovereign Pantheon.")
+    
