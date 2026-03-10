@@ -4,7 +4,7 @@ import requests
 import time
 
 # --- [1. MASTER CONFIG & UI] ---
-st.set_page_config(page_title="AiCoincast v166.0 Eternal", layout="wide")
+st.set_page_config(page_title="AiCoincast v167.0 Absolute", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 try:
@@ -21,16 +21,16 @@ st.markdown("""
     .glow-pos { color: #00FF00 !important; text-shadow: 0 0 10px #00FF00; font-weight: bold; }
     .glow-neg { color: #FF0000 !important; text-shadow: 0 0 10px #FF0000; font-weight: bold; }
     
-    /* NORMAL SPEED TICKER */
+    /* TURBO SPEED TICKER (10s) */
     .scroller { white-space: nowrap; overflow: hidden; background: #1A0B35; padding: 12px; border-bottom: 2px solid #00FF00; margin-bottom: 20px; }
-    .scroller span { display: inline-block; padding-left: 60px; animation: scroll 18s linear infinite; font-weight: bold; font-family: monospace; font-size: 16px; color: #00FF00; }
+    .scroller span { display: inline-block; padding-left: 60px; animation: scroll 12s linear infinite; font-weight: bold; font-family: monospace; font-size: 16px; color: #00FF00; }
     @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     
     [data-testid="stDataFrame"] { border: 2px solid #00FF00 !important; border-radius: 12px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- [FAIL-SAFE CORE UTILITIES] ---
+# --- [CORE UTILITIES - ATOMIC SAFETY] ---
 def safe_str_upper(val):
     return str(val).upper() if val is not None else "N/A"
 
@@ -49,20 +49,25 @@ def get_glow_ind(val):
         return f"▬ 0.0%"
     except: return f"▬ 0.0%"
 
-# [ID VAULT - 14 SOVEREIGN NODES]
-MY_14_IDS = ["bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol", "qanplatform", "chaingpt", "velas", "griffain", "vaiot", "everdome", "sin-city", "layerai", "robonomics-network", "bloktopia"]
+# [ID VAULT - THE 14 SOVEREIGN NODES]
+# Note: 'polygon-ecosystem-token' is the correct ID for POL (ex-MATIC)
+MY_14_IDS = [
+    "bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol",
+    "qanplatform", "chaingpt", "velas", "griffain",
+    "vaiot", "everdome", "sin-city", "layerai", "robonomics-network", "bloktopia"
+]
 
 @st.cache_data(ttl=60)
-def fetch_eternal_intelligence():
+def fetch_absolute_intelligence():
     sov_res, g_res, scroll_res, idx_res = [], [], [], []
     base_url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&price_change_percentage=24h,7d,30d"
     
     try:
-        # 1. Scroller & Alpha Node (Priority Calls)
-        scroll_res = requests.get(f"{base_url}&order=market_cap_desc&per_page=25&page=1", timeout=10).json()
-        sov_res = requests.get(f"{base_url}&ids={','.join(MY_14_IDS)}", timeout=10).json()
-        
-        # 2. Global Mega Node - Optimized Single Fetch to prevent API ban
+        # 1. Scroller Data (Top 20)
+        scroll_res = requests.get(f"{base_url}&order=market_cap_desc&per_page=20&page=1", timeout=8).json()
+        # 2. Sentinel Alpha (Strictly 14 IDs)
+        sov_res = requests.get(f"{base_url}&ids={','.join(MY_14_IDS)}", timeout=8).json()
+        # 3. Global Node - Single Robust Fetch (250 Assets)
         g_res = requests.get(f"{base_url}&order=market_cap_desc&per_page=250&page=1", timeout=10).json()
     except: pass
 
@@ -76,24 +81,24 @@ def fetch_eternal_intelligence():
             except: pass
     return sov_res, g_res, scroll_res, idx_res
 
-# --- [2. EXECUTION & LOGIC] ---
-sov_data, g_node, scroll, f2_idx = fetch_eternal_intelligence()
+# --- [2. EXECUTION] ---
+sov_data, g_node, scroll, f2_idx = fetch_absolute_intelligence()
 
 with st.sidebar:
-    st.title("🔐 OMNI VAULT v166")
+    st.title("🔐 OMNI VAULT v167")
     m_key = st.text_input("Master Key", type="password", placeholder="••••••••")
     if isinstance(sov_data, list):
         st.success(f"Verified Nodes: {len(sov_data)}/14")
-    else:
-        st.error("Global Data Sync Error")
+        if any(c.get('id') == 'polygon-ecosystem-token' for c in sov_data):
+            st.info("POL (MATIC) Node: ACTIVE ✅")
 
 if m_key == MASTER_KEY:
-    # ROW 1: TICKER
+    # --- ROW 1: TURBO SCROLLER ---
     if isinstance(scroll, list):
         s_html = "".join([f"<span>{safe_str_upper(c.get('symbol'))}: {format_price(c.get('current_price'))} ({get_glow_ind(c.get('price_change_percentage_24h_in_currency'))})</span>" for c in scroll if c])
         st.markdown(f'<div class="scroller">{s_html}</div>', unsafe_allow_html=True)
 
-    # ROW 2: INDICES
+    # --- ROW 2: MARKET INDICES ---
     st.markdown("### 📈 Market Alpha Indices")
     if f2_idx:
         cols = st.columns(len(f2_idx))
@@ -102,14 +107,14 @@ if m_key == MASTER_KEY:
     
     st.markdown("---")
 
-    # ROW 3: SENTINEL ALPHA (FIXED 14/14)
+    # --- ROW 3: SENTINEL ALPHA (FIXED 14/14) ---
     st.header("🛰️ Sentinel Alpha: Sovereign Command")
     if isinstance(sov_data, list):
         df_alpha = []
         for c in sov_data:
             name = safe_str_upper(c.get('name'))
             if c.get('id') == "everdome": name = "HUM(AI)N (AI)"
-            if c.get('id') == "sin-city": name = "SINVERSE (SIN)"
+            if c.get('id') == "polygon-ecosystem-token": name = "POL (EX-MATIC)"
             
             df_alpha.append({
                 "Logo": c.get('image'), "Asset": name,
@@ -122,11 +127,11 @@ if m_key == MASTER_KEY:
 
     st.markdown("---")
 
-    # ROW 4: GLOBAL MEGA NODE (FIXED 0 ASSETS ERROR)
+    # --- ROW 4: GLOBAL MEGA NODE (RESTORED) ---
     st.header(f"🌍 Global Mega Node ({len(g_node) if g_node else 0} Assets Online)")
-    q = st.text_input("🔍 Search Neural Index...")
+    q = st.text_input("🔍 Search 250+ Neural Assets...")
     if isinstance(g_node, list) and len(g_node) > 0:
-        filtered = [c for c in g_node if q.lower() in str(c.get('name','')).lower()]
+        filtered = [c for c in g_node if q.lower() in str(c.get('name','')).lower() or q.lower() in str(c.get('symbol','')).lower()]
         df_global = []
         for c in filtered[:100]:
             df_global.append({
@@ -136,7 +141,8 @@ if m_key == MASTER_KEY:
             })
         st.dataframe(pd.DataFrame(df_global), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
     else:
-        st.warning("⚠️ Global Node is syncing. Please refresh in 30 seconds.")
+        st.error("⚠️ API Busy. Please refresh after 20 seconds.")
 
 else:
     st.info("Enter Master Key to access the Sovereign Monolith.")
+    
