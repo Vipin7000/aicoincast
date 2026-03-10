@@ -4,7 +4,7 @@ import requests
 import time
 
 # --- [1. MASTER CONFIG & UI] ---
-st.set_page_config(page_title="AiCoincast v142.0 Final", layout="wide")
+st.set_page_config(page_title="AiCoincast v144.0 Zenith", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 st.markdown("""
@@ -21,7 +21,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- [CORE ALGORITHMS: v142 ABSOLUTE] ---
+# --- [ALGO SUITE: v144 ABSOLUTE] ---
 def safe_float(val):
     try: return float(val) if val is not None else 0.0
     except: return 0.0
@@ -39,74 +39,74 @@ def get_arbitrage_pot(high, low):
     pot = ((safe_float(high) - safe_float(low)) / safe_float(low)) * 100 if safe_float(low) > 0 else 0
     return "🔥 HIGH SWING" if pot >= 10 else "💎 STABLE"
 
-# [MASTER ID VAULT]
-F1_IDS = ["bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol", "qanplatform", "chaingpt", "velas", "griffain", "vaiot", "sin-city", "robonomics-network", "unmarshal"]
-F2_IDS = ["layerai", "nftb", "everdome", "bloktopia"]
+# [MASTER ID VAULT - THE 16 SOVEREIGN NODES]
+MY_16_IDS = [
+    "bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol",
+    "qanplatform", "chaingpt", "velas", "griffain",
+    "vaiot", "sin-city", "layerai", "robonomics-network",
+    "unmarshal", "everdome", "bloktopia", "nftb"
+]
 
 @st.cache_data(ttl=60)
-def fetch_zenith_final():
-    f1_res, f2_res, g_res, total_mc = [], [], [], 1.0
+def fetch_zenith_intelligence():
+    sov_res, global_res, total_mc = [], [], 1.0
+    ids_str = ",".join(MY_16_IDS)
     base_url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&price_change_percentage=24h,7d,30d"
     
     try:
-        f1_res = requests.get(f"{base_url}&ids={','.join(F1_IDS)}&sparkline=true", timeout=15).json()
-        f2_res = requests.get(f"{base_url}&ids={','.join(F2_IDS)}&sparkline=true", timeout=15).json()
+        # Step 1: Force Fetch All 16 (Bypass Rank Filtering)
+        sov_res = requests.get(f"{base_url}&ids={ids_str}&sparkline=true", timeout=25).json()
         
-        # Global Mega Index (Buffer 200)
-        g_batch = requests.get(f"{base_url}&order=market_cap_desc&per_page=200&page=1", timeout=15).json()
-        if isinstance(g_batch, list): g_res = g_batch
+        # Step 2: Global Node (Buffer 250 Assets)
+        g_batch = requests.get(f"{base_url}&order=market_cap_desc&per_page=250&page=1", timeout=25).json()
+        if isinstance(g_batch, list): global_res = g_batch
         
-        gr_data = requests.get("https://api.coingecko.com/api/v3/global", timeout=10).json()
-        total_mc = safe_float(gr_data['data']['total_market_cap'].get('inr', 1))
+        # Market Authority
+        gr = requests.get("https://api.coingecko.com/api/v3/global", timeout=15).json()
+        total_mc = safe_float(gr['data']['total_market_cap'].get('inr', 1))
     except: pass
-    return f1_res, f2_res, g_res, total_mc
+    return sov_res, global_res, total_mc
 
 # --- [2. EXECUTION] ---
-f1, f2, g_market, global_mc = fetch_zenith_final()
+sov_data, g_market, global_mc = fetch_zenith_intelligence()
 
 with st.sidebar:
     st.title("🔐 OMNI VAULT")
     m_key = st.text_input("Master Key", type="password", placeholder="••••••••")
-    if isinstance(f1, list) and isinstance(f2, list):
-        st.success(f"Verified Nodes: {len(f1) + len(f2)}/16")
+    if isinstance(sov_data, list):
+        st.success(f"Verified Nodes: {len(sov_data)}/16")
 
 if m_key == MASTER_KEY:
-    tabs = st.tabs(["📊 FOLDER 1: SENTINEL", "💎 FOLDER 2: ALPHA SPEC", "🌍 GLOBAL NODE"])
+    tabs = st.tabs(["📊 SENTINEL ALPHA (16)", "🌍 GLOBAL MEGA NODE"])
     
     with tabs[0]:
-        st.header("🛰️ Sentinel Command: Primary Alpha")
-        if f1:
-            df1 = []
-            for c in f1:
-                df1.append({
-                    "Logo": c.get('image'), "Asset": c.get('name', 'N/A').upper(),
-                    "Poten": get_arbitrage_pot(c.get('high_24h'), c.get('low_24h')),
-                    "Price (INR)": format_price(c.get('current_price')),
-                    "24H": get_glow_ind(c.get('price_change_percentage_24h_in_currency')),
-                    "WEEK": get_glow_ind(c.get('price_change_percentage_7d_in_currency')),
-                    "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪"
-                })
-            st.dataframe(pd.DataFrame(df1), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
-
-    with tabs[1]:
-        st.header("💎 Folder 2: Alpha Spec (LAI & NFTB Focus)")
-        if f2:
-            df2 = []
-            for c in f2:
-                name = "HUM(AI)N (AI)" if c.get('id') == "everdome" else c.get('name', 'N/A').upper()
-                df2.append({
+        st.header("🛰️ Sentinel Command: 16 Sovereign Nodes")
+        if sov_data:
+            df_s = []
+            # Order Lock
+            sorted_sov = sorted(sov_data, key=lambda x: MY_16_IDS.index(x['id']) if x['id'] in MY_16_IDS else 99)
+            
+            for c in sorted_sov:
+                # Rebrand & Display Mappings
+                name = c.get('name', 'Syncing...').upper()
+                if c.get('id') == "sin-city": name = "SINVERSE (SIN)"
+                if c.get('id') == "layerai": name = "LAYERAI (LAI)"
+                if c.get('id') == "everdome": name = "HUM(AI)N (AI)"
+                
+                df_s.append({
                     "Logo": c.get('image'), "Asset": name,
+                    "Poten": get_arbitrage_pot(c.get('high_24h'), c.get('low_24h')),
                     "Price (INR)": format_price(c.get('current_price')),
                     "24H": get_glow_ind(c.get('price_change_percentage_24h_in_currency')),
                     "WEEK": get_glow_ind(c.get('price_change_percentage_7d_in_currency')),
                     "MONTH": get_glow_ind(c.get('price_change_percentage_30d_in_currency')),
                     "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪"
                 })
-            st.dataframe(pd.DataFrame(df2), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(df_s), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
 
-    with tabs[2]:
-        st.header("🌍 Global Market Index")
-        q_search = st.text_input("🔍 Search Global Node...")
+    with tabs[1]:
+        st.header("🌍 Global Market Sentinel")
+        q_search = st.text_input("🔍 Quick Search Asset...", placeholder="Enter name or symbol...")
         if g_market:
             filtered = [c for c in g_market if q_search.lower() in c.get('name', '').lower() or q_search.lower() in c.get('symbol', '').lower()]
             df_g = []
@@ -120,5 +120,5 @@ if m_key == MASTER_KEY:
                 })
             st.dataframe(pd.DataFrame(df_g), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
 else:
-    st.info("Sovereign Master, please enter Master Key to unlock.")
-            
+    st.info("Unlock via Master Key.")
+                
