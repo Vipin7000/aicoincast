@@ -1,11 +1,17 @@
 import streamlit as st
 import pandas as pd
 import requests
-import yfinance as yf
 import time
 
+# --- [SAFE MODULE LOAD] ---
+try:
+    import yfinance as yf
+    YF_READY = True
+except ImportError:
+    YF_READY = False
+
 # --- [1. MASTER CONFIG & UI] ---
-st.set_page_config(page_title="AiCoincast v147.0 Overlord", layout="wide")
+st.set_page_config(page_title="AiCoincast v149.0 Omnipotent", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 st.markdown("""
@@ -14,21 +20,21 @@ st.markdown("""
     h1, h2, h3, h4, p, span, li { color: #FFFFFF !important; }
     section[data-testid="stSidebar"] { background-color: #1A0B35 !important; border-right: 3px solid #00FF00 !important; }
     
-    /* Neon Glow Scaling */
-    .glow-pos { color: #00FF00 !important; text-shadow: 0 0 12px #00FF00; font-weight: bold; }
-    .glow-neg { color: #FF0000 !important; text-shadow: 0 0 12px #FF0000; font-weight: bold; }
+    /* Neon Glow Styling */
+    .glow-pos { color: #00FF00 !important; text-shadow: 0 0 10px #00FF00; font-weight: bold; }
+    .glow-neg { color: #FF0000 !important; text-shadow: 0 0 10px #FF0000; font-weight: bold; }
     
     [data-testid="stDataFrame"] { border: 2px solid #00FF00 !important; border-radius: 12px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- [CORE ALGORITHMS: v147] ---
+# --- [ALGO SUITE: v149 ABSOLUTE LOCK] ---
 def safe_float(val):
     try: return float(val) if val is not None else 0.0
     except: return 0.0
 
 def format_price(val, symbol="₹"):
-    return f"{symbol}{safe_float(val):,.2f}"
+    return f"{symbol}{safe_float(val):,.4f}"
 
 def get_glow_ind(val):
     v = safe_float(val)
@@ -40,96 +46,85 @@ def get_arbitrage_pot(high, low):
     pot = ((safe_float(high) - safe_float(low)) / safe_float(low)) * 100 if safe_float(low) > 0 else 0
     return "🔥 HIGH SWING" if pot >= 10 else "💎 STABLE"
 
-# [DATA VAULT]
+# [ID VAULT]
 MY_14_IDS = ["bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol", "qanplatform", "chaingpt", "velas", "griffain", "vaiot", "sin-city", "layerai", "robonomics-network", "unmarshal", "bloktopia"]
-
-# Market Indices Tickers
-MARKET_INDICES = {"SENSEX": "^BSESN", "NIFTY 50": "^NSEI"}
+INDICES = {"SENSEX": "^BSESN", "NIFTY 50": "^NSEI"}
 
 @st.cache_data(ttl=60)
-def fetch_overlord_intelligence():
-    # CRYPTO FETCH
+def fetch_omnipotent_data():
+    sov_res, global_res, total_mc, idx_res = [], [], 1.0, []
     base_url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&price_change_percentage=24h,7d,30d"
-    sov_res, global_res, total_mc = [], [], 1.0
     
     try:
+        # Step 1: Crypto Fetch
         sov_res = requests.get(f"{base_url}&ids={','.join(MY_14_IDS)}&sparkline=true", timeout=20).json()
-        g_batch = requests.get(f"{base_url}&order=market_cap_desc&per_page=150&page=1", timeout=20).json()
-        if isinstance(g_batch, list): global_res = g_batch
-        gr = requests.get("https://api.coingecko.com/api/v3/global", timeout=10).json()
+        global_res = requests.get(f"{base_url}&order=market_cap_desc&per_page=150&page=1", timeout=20).json()
+        gr = requests.get("https://api.coingecko.com/api/v3/global", timeout=15).json()
         total_mc = safe_float(gr['data']['total_market_cap'].get('inr', 1))
     except: pass
 
-    # EQUITY INDICES FETCH
-    index_data = []
-    for name, ticker in MARKET_INDICES.items():
-        try:
-            m_stock = yf.Ticker(ticker)
-            hist = m_stock.history(period="2d")
-            if not hist.empty and len(hist) >= 2:
-                curr = hist['Close'].iloc[-1]
-                prev = hist['Close'].iloc[-2]
-                chg = ((curr - prev) / prev) * 100
-                index_data.append({"Name": name, "Price": curr, "Change": chg})
-        except: pass
-        
-    return sov_res, global_res, total_mc, index_data
+    # Step 2: Market Indices Fetch
+    if YF_READY:
+        for name, ticker in INDICES.items():
+            try:
+                stock = yf.Ticker(ticker)
+                h = stock.history(period="2d")
+                if len(h) >= 2:
+                    cp, pp = h['Close'].iloc[-1], h['Close'].iloc[-2]
+                    idx_res.append({"Name": name, "Price": cp, "Change": ((cp-pp)/pp)*100})
+            except: pass
+    return sov_res, global_res, total_mc, idx_res
 
 # --- [2. EXECUTION] ---
-sov_data, g_market, global_mc, index_data = fetch_overlord_intelligence()
+f1, g_node, g_mc, f2_idx = fetch_omnipotent_data()
 
 with st.sidebar:
     st.title("🔐 OMNI VAULT")
     m_key = st.text_input("Master Key", type="password", placeholder="••••••••")
-    if sov_data: st.success(f"Verified Crypto: {len(sov_data)}/14")
-    if index_data: st.success(f"Indices: {len(index_data)} Verified")
+    if f1: st.success(f"Verified Nodes: {len(f1)}/14")
+    if not YF_READY: st.warning("Run 'pip install yfinance' for Folder 2.")
 
 if m_key == MASTER_KEY:
-    tabs = st.tabs(["📊 COMMAND 1: SENTINEL ALPHA", "📈 COMMAND 2: SENSEX & NIFTY"])
-
-    # --- FOLDER 1: CRYPTO UNION ---
+    tabs = st.tabs(["📊 SENTINEL ALPHA", "🌍 GLOBAL MEGA NODE", "📈 MARKET INDICES"])
+    
     with tabs[0]:
-        st.header("🛰️ Sentinel Alpha (Sovereign Crypto Nodes)")
-        if sov_data:
-            df_s = []
-            for c in sov_data:
-                df_s.append({
-                    "Logo": c.get('image'), "Asset": c.get('name', 'N/A').upper(),
+        st.header("🛰️ Sentinel Command: 14 Sovereign Nodes")
+        if f1:
+            df1 = []
+            for c in f1:
+                name = "LAYERAI (LAI)" if c.get('id') == "layerai" else c.get('name', 'N/A').upper()
+                df1.append({
+                    "Logo": c.get('image'), "Asset": name,
                     "Poten": get_arbitrage_pot(c.get('high_24h'), c.get('low_24h')),
                     "Price (INR)": format_price(c.get('current_price')),
                     "24H": get_glow_ind(c.get('price_change_percentage_24h_in_currency')),
+                    "WEEK": get_glow_ind(c.get('price_change_percentage_7d_in_currency')),
                     "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪"
                 })
-            st.dataframe(pd.DataFrame(df_s), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
-        
-        st.markdown("---")
-        st.header("🌍 Global Crypto Mega Node")
-        if g_market:
-            df_g = []
-            for c in g_market:
-                df_g.append({
+            st.dataframe(pd.DataFrame(df1), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
+
+    with tabs[1]:
+        st.header("🌍 Global Market Index (150 Assets)")
+        q_search = st.text_input("🔍 Quick Search Global Node...")
+        if g_node:
+            filtered = [c for c in g_node if q_search.lower() in c.get('name','').lower()]
+            dfg = []
+            for c in filtered:
+                dfg.append({
                     "Rank": c.get('market_cap_rank'), "Logo": c.get('image'), "Name": c.get('name'),
-                    "Authority": f"{(safe_float(c.get('market_cap'))/global_mc*100):.2f}%",
+                    "Authority": f"{(safe_float(c.get('market_cap'))/g_mc*100):.2f}%",
                     "Price": format_price(c.get('current_price')),
                     "24H": get_glow_ind(c.get('price_change_percentage_24h_in_currency')),
                     "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪"
                 })
-            st.dataframe(pd.DataFrame(df_g), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(dfg), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
 
-    # --- FOLDER 2: EQUITY INDICES ---
-    with tabs[1]:
+    with tabs[2]:
         st.header("📈 Indian Market Alpha Indices")
-        if index_data:
-            df_i = []
-            for idx in index_data:
-                df_i.append({
-                    "Market Index": idx['Name'],
-                    "Current Level": f"{idx['Price']:,.2f}",
-                    "24H Change": get_glow_ind(idx['Change']),
-                    "Authority": "BSE/NSE India"
-                })
-            st.dataframe(pd.DataFrame(df_i), use_container_width=True, hide_index=True)
-            st.info("Market data syncs via YFinance Protocol (NSE/BSE).")
+        if f2_idx:
+            dfi = [{"Index": i['Name'], "Price": f"{i['Price']:,.2f}", "Change": get_glow_ind(i['Change'])} for i in f2_idx]
+            st.dataframe(pd.DataFrame(dfi), use_container_width=True, hide_index=True)
+        else:
+            st.info("Market data syncing or library missing.")
 else:
-    st.info("Sovereign Master, please enter Master Key to unlock.")
-                
+    st.info("Enter Master Key to Unlock.")
