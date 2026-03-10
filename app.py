@@ -4,7 +4,7 @@ import requests
 import time
 
 # --- [1. MASTER CONFIG & UI] ---
-st.set_page_config(page_title="AiCoincast v164.0 Unbreakable", layout="wide")
+st.set_page_config(page_title="AiCoincast v165.0 Final", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 try:
@@ -30,15 +30,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- [CORE ALGORITHMS - NULL SAFE] ---
-def safe_upper(val):
-    if val is None: return "N/A"
-    return str(val).upper()
+# --- [CORE ALGORITHMS - ABSOLUTE SAFETY] ---
+def safe_str(val):
+    return str(val) if val is not None else "N/A"
 
 def format_price(val, symbol="₹"):
     try:
         v = float(val) if val is not None else 0.0
-        if v == 0: return "₹0.00"
         return f"{symbol}{v:,.6f}" if v < 0.1 else f"{symbol}{v:,.2f}"
     except: return "₹0.00"
 
@@ -51,24 +49,19 @@ def get_glow_ind(val):
     except: return f"▬ 0.0%"
 
 # [ID VAULT - THE 14 SOVEREIGN NODES]
-MY_14_IDS = [
-    "bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol",
-    "qanplatform", "chaingpt", "velas", "griffain",
-    "vaiot", "everdome", "sin-city", "layerai", "robonomics-network", "bloktopia"
-]
+MY_14_IDS = ["bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol", "qanplatform", "chaingpt", "velas", "griffain", "vaiot", "everdome", "sin-city", "layerai", "robonomics-network", "bloktopia"]
 
 @st.cache_data(ttl=60)
-def fetch_unbreakable_intelligence():
+def fetch_final_data():
     sov_res, g_res, scroll_res, idx_res = [], [], [], []
     base_url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&price_change_percentage=24h,7d,30d"
     
     try:
-        # 1. Scroller & Alpha Node (Priority)
-        scroll_res = requests.get(f"{base_url}&order=market_cap_desc&per_page=25&page=1", timeout=10).json()
-        sov_res = requests.get(f"{base_url}&ids={','.join(MY_14_IDS)}", timeout=10).json()
-        
-        # 2. Global Node - FIXED 250 for instant work & Searchability
-        g_res = requests.get(f"{base_url}&order=market_cap_desc&per_page=250&page=1", timeout=10).json()
+        # 1. Scroller & Alpha Node
+        scroll_res = requests.get(f"{base_url}&order=market_cap_desc&per_page=25&page=1").json()
+        sov_res = requests.get(f"{base_url}&ids={','.join(MY_14_IDS)}").json()
+        # 2. Global Node - Limited to 250 for 100% reliability
+        g_res = requests.get(f"{base_url}&order=market_cap_desc&per_page=250&page=1").json()
     except: pass
 
     if YF_READY:
@@ -76,24 +69,24 @@ def fetch_unbreakable_intelligence():
             try:
                 stock = yf.Ticker(ticker)
                 h = stock.history(period="2d")
-                if not h.empty and len(h) >= 2:
+                if not h.empty:
                     idx_res.append({"Name": name, "Price": h['Close'].iloc[-1], "Change": ((h['Close'].iloc[-1]-h['Close'].iloc[-2])/h['Close'].iloc[-2])*100})
             except: pass
     return sov_res, g_res, scroll_res, idx_res
 
 # --- [2. EXECUTION] ---
-sov_data, g_node, scroll, f2_idx = fetch_unbreakable_intelligence()
+sov_data, g_node, scroll, f2_idx = fetch_final_data()
 
 with st.sidebar:
-    st.title("🔐 OMNI VAULT v164")
-    m_key = st.text_input("Master Key", type="password", placeholder="••••••••")
+    st.title("🔐 OMNI VAULT v165")
+    m_key = st.text_input("Master Key", type="password")
     if isinstance(sov_data, list):
         st.success(f"Verified Nodes: {len(sov_data)}/14")
 
 if m_key == MASTER_KEY:
-    # ROW 1: SCROLLER (NORMAL SPEED)
+    # ROW 1: SCROLLER
     if isinstance(scroll, list):
-        s_html = "".join([f"<span>{safe_upper(c.get('symbol'))}: {format_price(c.get('current_price'))} ({get_glow_ind(c.get('price_change_percentage_24h_in_currency'))})</span>" for c in scroll if c])
+        s_html = "".join([f"<span>{safe_str(c.get('symbol')).upper()}: {format_price(c.get('current_price'))} ({get_glow_ind(c.get('price_change_percentage_24h_in_currency'))})</span>" for c in scroll if c])
         st.markdown(f'<div class="scroller">{s_html}</div>', unsafe_allow_html=True)
 
     # ROW 2: INDICES
@@ -105,12 +98,12 @@ if m_key == MASTER_KEY:
     
     st.markdown("---")
 
-    # ROW 3: SENTINEL ALPHA (FIXED & PROTECTED)
+    # ROW 3: SENTINEL ALPHA (FIXED)
     st.header("🛰️ Sentinel Alpha: Sovereign Command")
     if isinstance(sov_data, list):
         df1 = []
         for c in sov_data:
-            d_name = safe_upper(c.get('name'))
+            d_name = safe_str(c.get('name')).upper()
             if c.get('id') == "everdome": d_name = "HUM(AI)N (AI)"
             if c.get('id') == "polygon-ecosystem-token": d_name = "POL (EX-MATIC)"
             
@@ -126,8 +119,8 @@ if m_key == MASTER_KEY:
     st.markdown("---")
 
     # ROW 4: GLOBAL MEGA NODE (RESTORED)
-    st.header(f"🌍 Global Mega Node (Pool: {len(g_node) if g_node else 0})")
-    q = st.text_input("🔍 Quick Neural Search...", placeholder="Enter asset name...")
+    st.header(f"🌍 Global Mega Node ({len(g_node) if g_node else 0} Assets)")
+    q = st.text_input("🔍 Neural Search Index...")
     if isinstance(g_node, list):
         filtered = [c for c in g_node if q.lower() in str(c.get('name','')).lower()]
         dfg = []
@@ -139,5 +132,5 @@ if m_key == MASTER_KEY:
             })
         st.dataframe(pd.DataFrame(dfg), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
 else:
-    st.info("Enter Master Key to unlock.")
-                                                                                            
+    st.info("Please enter Master Key.")
+    
