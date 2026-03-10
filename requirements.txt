@@ -3,3 +3,4 @@ pandas
 requests
 google-generativeai
 feedparser
+yfinance
