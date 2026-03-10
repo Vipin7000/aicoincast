@@ -4,7 +4,7 @@ import requests
 import time
 
 # --- [1. MASTER CONFIG & UI] ---
-st.set_page_config(page_title="AiCoincast v117.0 Eternal", layout="wide")
+st.set_page_config(page_title="AiCoincast v119.0 Glow", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 st.markdown("""
@@ -12,13 +12,16 @@ st.markdown("""
     .stApp { background-color: #0A041A !important; }
     h1, h2, h3, h4, p, span, li { color: #FFFFFF !important; }
     section[data-testid="stSidebar"] { background-color: #1A0B35 !important; border-right: 3px solid #00FF00 !important; }
-    .ticker-wrap { background: #000; padding: 12px; border-bottom: 2px solid #00FF00; margin-bottom: 25px; }
-    .ticker-text { color: #00FF00; font-weight: bold; font-size: 16px; font-family: 'Courier New', monospace; }
+    
+    /* Indicator Glow CSS */
+    .pos-glow { color: #00FF00 !important; font-weight: bold; text-shadow: 0 0 10px #00FF00; }
+    .neg-glow { color: #FF0000 !important; font-weight: bold; text-shadow: 0 0 10px #FF0000; }
+    
     [data-testid="stDataFrame"] { border: 1px solid #41444C; border-radius: 12px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- [ALGO SUITE: OMNI-RECOVERY] ---
+# --- [ALGO SUITE: GLOW-OPTIMIZED] ---
 def safe_float(val):
     try: return float(val) if val is not None else 0.0
     except: return 0.0
@@ -26,10 +29,11 @@ def safe_float(val):
 def format_price(val):
     return f"₹{safe_float(val):,.4f}"
 
-def get_arrow_ind(val):
+# Glow Indicator Logic
+def get_glow_ind(val):
     v = safe_float(val)
-    if v > 0: return f"▲ {abs(v):.1f}%"
-    elif v < 0: return f"▼ {abs(v):.1f}%"
+    if v > 0: return f"🟢 ▲ {abs(v):.1f}%"
+    elif v < 0: return f"🔴 ▼ {abs(v):.1f}%"
     return f"▬ 0.0%"
 
 def get_trend_strength(c24, c7, c30):
@@ -47,8 +51,12 @@ def get_depth_score(vol, mc):
         return "🟢 HIGH" if ratio > 0.10 else "🔴 LOW"
     return "🔴 LOW"
 
-# [MASTER ID LOCK]
-MY_12_IDS = ["bitcoin", "ethereum", "virtual-protocol", "griffain", "vaiot", "robonomics-network", "velas", "qanplatform", "chaingpt", "sin-city", "polygon-ecosystem-token", "nftb"]
+# [MASTER ID LOCK - NFTB ADDED MANUALLY]
+MY_12_IDS = [
+    "bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol", 
+    "qanplatform", "chaingpt", "velas", "griffain", 
+    "vaiot", "sin-city", "nftb", "robonomics-network"
+]
 
 @st.cache_data(ttl=60)
 def fetch_resilient_intelligence():
@@ -75,12 +83,6 @@ with st.sidebar:
     m_key = st.text_input("Master Key", type="password")
     if sov_data:
         st.success(f"Verified Nodes: {len(sov_data)}/12")
-        st.info(f"Sovereign MC: ₹{sum([safe_float(c.get('market_cap')) for c in sov_data]):,.0f}")
-
-# LIVE TICKER
-if global_market:
-    t_parts = [f"{c['symbol'].upper()}: {format_price(c['current_price'])}" for c in global_market[:15]]
-    st.markdown(f'<div class="ticker-wrap"><marquee class="ticker-text">🚀 OMNI-FEED: {" | ".join(t_parts)}</marquee></div>', unsafe_allow_html=True)
 
 if m_key == MASTER_KEY:
     t1, t2 = st.tabs(["📊 SENTINEL ALPHA", "📈 GLOBAL MEGA INDEX"])
@@ -90,11 +92,14 @@ if m_key == MASTER_KEY:
         if sov_data:
             df_s = []
             for c in sov_data:
+                d_name = "SINVERSE (SIN)" if c.get('id') == "sin-city" else c.get('name').upper()
                 c24, c7, c30 = c.get('price_change_percentage_24h_in_currency'), c.get('price_change_percentage_7d_in_currency'), c.get('price_change_percentage_30d_in_currency')
+                
                 df_s.append({
-                    "Logo": c.get('image'), "Asset": c.get('name').upper(),
+                    "Logo": c.get('image'), "Asset": d_name,
+                    "Poten": get_arbitrage_pot(c.get('high_24h'), c.get('low_24h')),
                     "Price (INR)": format_price(c.get('current_price')),
-                    "24H": get_arrow_ind(c24), "WEEK": get_arrow_ind(c7), "MONTH": get_arrow_ind(c30),
+                    "24H": get_glow_ind(c24), "WEEK": get_glow_ind(c7), "MONTH": get_glow_ind(c30),
                     "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪",
                     "Trend": c.get('sparkline_in_7d', {}).get('price', [])
                 })
@@ -112,13 +117,13 @@ if m_key == MASTER_KEY:
                     "Rank": c.get('market_cap_rank'), "Logo": c.get('image'), "Name": c.get('name'),
                     "Authority": f"{(safe_float(c.get('market_cap'))/total_market_cap*100):.2f}%",
                     "Poten": get_arbitrage_pot(c.get('high_24h'), c.get('low_24h')),
-                    "Depth": get_depth_score(c.get('total_volume'), c.get('market_cap')),
+                    "Liquidity": get_depth_score(c.get('total_volume'), c.get('market_cap')),
                     "Trend": get_trend_strength(c24, c7, c30),
                     "Price": format_price(c.get('current_price')),
-                    "24H": get_arrow_ind(c24), "7D": get_arrow_ind(c7), "30D": get_arrow_ind(c30),
-                    "Whale": "🐋 Whale Alert" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪"
+                    "24H": get_glow_ind(c24), "7D": get_glow_ind(c7), "30D": get_glow_ind(c30),
+                    "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪"
                 })
             st.dataframe(pd.DataFrame(df_g), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
 else:
-    st.info("Enter Master Key to Unlock Sovereign Node.")
-    
+    st.info("Enter Master Key to Unlock.")
+                                      
