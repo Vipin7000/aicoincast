@@ -1,10 +1,9 @@
 import streamlit as st
 import pandas as pd
 import requests
-import time
 
 # --- [1. MASTER CONFIG & UI] ---
-st.set_page_config(page_title="AiCoincast v50.0 Flawless", layout="wide")
+st.set_page_config(page_title="AiCoincast v51.0 Apex", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 st.markdown("""
@@ -18,7 +17,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# [ALGO: PRECISION ENGINE]
+# [ALGO: ABSOLUTE PRECISION ENGINE]
 def safe_float(val):
     try: return float(val) if val is not None else 0.0
     except: return 0.0
@@ -31,73 +30,74 @@ def get_ind(val):
     elif val < 0: return "🔴"
     return "⚪"
 
-# [MASTER ID LOCK]
+# [MASTER ID LOCK - RE-VERIFIED FOR SIN & NFTB]
 MY_12_IDS = [
     "bitcoin", "ethereum", "virtual-protocol", "griffain", 
     "vaiot", "robonomics-network", "velas", "qanplatform", 
-    "chaingpt", "sinverse", "polygon-ecosystem-token", "nftb"
+    "chaingpt", "sin-city", "polygon-ecosystem-token", "nftb"
 ]
 
-# --- [2. DATA FETCH ENGINE] ---
-@st.cache_data(ttl=300)
-def fetch_terminal_data():
+@st.cache_data(ttl=60)
+def fetch_apex_intelligence():
     ids_sov = ",".join(MY_12_IDS)
-    global_list = []
     try:
-        # A. Sovereign 12 (Dedicated Force-Fetch)
+        # A. Sovereign 12 Dedicated Node (Forced SIN/NFTB Fetch)
         url_sov = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids={ids_sov}&sparkline=true&price_change_percentage=24h,7d,30d"
         r_sov = requests.get(url_sov, timeout=15).json()
         
-        # B. Global 3000 Index (Batch 1 - Top 250 for Ticker)
-        url_g = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&order=market_cap_desc&per_page=250&page=1&price_change_percentage=24h,7d,30d"
+        # B. Global Market (Ticker & Index)
+        url_g = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h,7d,30d"
         r_g = requests.get(url_g, timeout=15).json()
         
         return (r_sov if isinstance(r_sov, list) else []), (r_g if isinstance(r_g, list) else [])
     except:
         return [], []
 
-sov_data, global_market = fetch_terminal_data()
+sov_data, global_market = fetch_apex_intelligence()
 
-# --- [3. TOP 20 LIVE TICKER] ---
+# --- [2. TOP 20 LIVE TICKER] ---
 if global_market:
     t_items = [f"{get_ind(safe_float(c.get('price_change_percentage_24h')))} {c['symbol'].upper()}: {format_price(c['current_price'])}" for c in global_market[:20]]
-    st.markdown(f'<div class="ticker-wrap"><marquee class="ticker-text">🛰️ OMNI-FEED LIVE: {" | ".join(t_items)}</marquee></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="ticker-wrap"><marquee class="ticker-text">🚀 LIVE MARKET FEED: {" | ".join(t_items)}</marquee></div>', unsafe_allow_html=True)
 
-# --- [4. SIDEBAR - FIXED VARIABLE DEFINITION] ---
+# --- [3. SIDEBAR VAULT] ---
 with st.sidebar:
     st.title("🔐 OMNI VAULT")
-    # FIX: Initializing m_key here BEFORE it's used in the main area
     m_key = st.text_input("Master Key", type="password", placeholder="••••••••")
-    
     if sov_data:
         tmc = sum([safe_float(c.get('market_cap', 0)) for c in sov_data])
         st.info(f"💼 Sovereign MC: ₹{tmc:,.0f}")
-        st.success("📈 NIFTY 50 INDEX: 22,493.50")
+        st.success(f"Tracked Assets: {len(sov_data)}/12")
 
-# --- [5. MAIN TERMINAL LOGIC] ---
-# Now m_key is defined, so NameError will NOT occur
+# --- [4. MAIN TERMINAL LOGIC] ---
 if m_key == MASTER_KEY:
     t1, t2, t3, t4 = st.tabs(["📊 SENTINEL ALPHA", "📈 PERFORMANCE", "📰 BROADCAST", "⚖️ RISK ENGINE"])
     
     with t1:
-        st.subheader("🛰️ Sentinel Command: 12-Asset Sovereign Tracker")
+        st.subheader("🛰️ Sentinel Command: 12 Sovereign Assets")
         if sov_data:
             df_sov = []
             for c in sov_data:
+                # Labeling SIN-CITY as SINVERSE for display
+                name = "SINVERSE (SIN)" if c.get('id') == "sin-city" else c.get('name').upper()
                 c24, c7d, c30d = safe_float(c.get('price_change_percentage_24h')), safe_float(c.get('price_change_percentage_7d_in_currency')), safe_float(c.get('price_change_percentage_30d_in_currency'))
+                
                 df_sov.append({
                     "Logo": c.get('image'),
-                    "Asset": c.get('name').upper(),
+                    "Asset": name,
                     "Price (INR)": format_price(c.get('current_price')),
                     "24H": f"{get_ind(c24)} {abs(c24):.1f}%",
-                    "7D": f"{get_ind(c7d)} {abs(c7d):.1f}%",
-                    "30D": f"{get_ind(c30d)} {abs(c30d):.1f}%",
-                    "Trend": c.get('sparkline_in_7d', {}).get('price', [])
+                    "7D (WEEK)": f"{get_ind(c7d)} {abs(c7d):.1f}%",
+                    "30D (MONTH)": f"{get_ind(c30d)} {abs(c30d):.1f}%",
+                    "7D Trend": c.get('sparkline_in_7d', {}).get('price', [])
                 })
-            st.dataframe(pd.DataFrame(df_sov), column_config={"Logo": st.column_config.ImageColumn("Logo"), "Trend": st.column_config.LineChartColumn("Trend")}, use_container_width=True, hide_index=True)
-        
+            st.dataframe(pd.DataFrame(df_sov), column_config={"Logo": st.column_config.ImageColumn("Logo"), "7D Trend": st.column_config.LineChartColumn("7D Trend")}, use_container_width=True, hide_index=True)
+        else:
+            st.warning("🔄 Re-syncing Sovereign Node (SIN/NFTB)...")
+
         st.divider()
-        st.subheader("🌍 Global Mega Index (Top Assets)")
+
+        st.subheader(f"🌍 Global Mega Index ({len(global_market)} Assets)")
         if global_market:
             df_g = pd.DataFrame([{
                 "Rank": c.get('market_cap_rank'),
@@ -105,10 +105,10 @@ if m_key == MASTER_KEY:
                 "Name": c.get('name'),
                 "Price": format_price(c.get('current_price')),
                 "24H": f"{get_ind(safe_float(c.get('price_change_percentage_24h')))} {abs(safe_float(c.get('price_change_percentage_24h'))):.1f}%",
-                "1W": f"{get_ind(safe_float(c.get('price_change_percentage_7d_in_currency')))} {abs(safe_float(c.get('price_change_percentage_7d_in_currency'))):.1f}%"
+                "1W": f"{get_ind(safe_float(c.get('price_change_percentage_7d_in_currency')))} {abs(safe_float(c.get('price_change_percentage_7d_in_currency'))):.1f}%",
+                "1M": f"{get_ind(safe_float(c.get('price_change_percentage_30d_in_currency')))} {abs(safe_float(c.get('price_change_percentage_30d_in_currency'))):.1f}%"
             } for c in global_market])
             st.dataframe(df_g, column_config={"Logo": st.column_config.ImageColumn("Logo")}, use_container_width=True, hide_index=True)
 
 else:
-    st.info("⚠️ Master Key Required to Unlock Node.")
-                              
+    st.info("⚠️ Master Key Required to Access Node.")
