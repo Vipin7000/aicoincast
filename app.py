@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 
 # --- [1. MASTER CONFIG & UI] ---
-st.set_page_config(page_title="AiCoincast v52.0 Core", layout="wide")
+st.set_page_config(page_title="AiCoincast v53.0 Sovereign", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 st.markdown("""
@@ -30,7 +30,7 @@ def get_ind(val):
     elif val < 0: return "🔴"
     return "⚪"
 
-# [MASTER ID LOCK - RE-VERIFIED FOR NFTB & SINVERSE]
+# [MASTER ID LOCK - RE-VERIFIED]
 MY_12_IDS = [
     "bitcoin", "ethereum", "virtual-protocol", "griffain", 
     "vaiot", "robonomics-network", "velas", "qanplatform", 
@@ -38,10 +38,10 @@ MY_12_IDS = [
 ]
 
 @st.cache_data(ttl=60)
-def fetch_core_intelligence():
+def fetch_sovereign_intelligence():
     ids_sov = ",".join(MY_12_IDS)
     try:
-        # A. Sovereign 12 (Dedicated Node - Force Fetch)
+        # A. Sovereign 12 Dedicated (Force-Fetch for SIN/NFTB)
         url_sov = f"https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&ids={ids_sov}&sparkline=true&price_change_percentage=24h,7d,30d"
         r_sov = requests.get(url_sov, timeout=15).json()
         
@@ -53,14 +53,14 @@ def fetch_core_intelligence():
     except:
         return [], []
 
-sov_data, global_market = fetch_core_intelligence()
+sov_data, global_market = fetch_sovereign_intelligence()
 
 # --- [2. TOP 20 LIVE TICKER] ---
 if global_market:
     t_items = [f"{get_ind(safe_float(c.get('price_change_percentage_24h')))} {c['symbol'].upper()}: {format_price(c['current_price'])}" for c in global_market[:20]]
-    st.markdown(f'<div class="ticker-wrap"><marquee class="ticker-text">🛰️ OMNI-FEED LIVE: {" | ".join(t_items)}</marquee></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="ticker-wrap"><marquee class="ticker-text">🚀 LIVE MARKET FEED: {" | ".join(t_items)}</marquee></div>', unsafe_allow_html=True)
 
-# --- [3. SIDEBAR VAULT - DEFINED FIRST TO AVOID NAMEERROR] ---
+# --- [3. SIDEBAR VAULT - DEFINED FIRST] ---
 with st.sidebar:
     st.title("🔐 OMNI VAULT")
     m_key = st.text_input("Master Key", type="password", placeholder="••••••••")
@@ -78,7 +78,6 @@ if m_key == MASTER_KEY:
         if sov_data:
             df_sov = []
             for c in sov_data:
-                # Labeling Rebranded Coins correctly for display
                 name = "SINVERSE (SIN)" if c.get('id') == "sin-city" else c.get('name').upper()
                 c24, c7d, c30d = safe_float(c.get('price_change_percentage_24h')), safe_float(c.get('price_change_percentage_7d_in_currency')), safe_float(c.get('price_change_percentage_30d_in_currency'))
                 
@@ -89,9 +88,9 @@ if m_key == MASTER_KEY:
                     "24H": f"{get_ind(c24)} {abs(c24):.1f}%",
                     "7D (WEEK)": f"{get_ind(c7d)} {abs(c7d):.1f}%",
                     "30D (MONTH)": f"{get_ind(c30d)} {abs(c30d):.1f}%",
-                    "7D Trend": c.get('sparkline_in_7d', {}).get('price', [])
+                    "7D Trend Chart": c.get('sparkline_in_7d', {}).get('price', [])
                 })
-            st.dataframe(pd.DataFrame(df_sov), column_config={"Logo": st.column_config.ImageColumn("Logo"), "7D Trend": st.column_config.LineChartColumn("7D Trend")}, use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(df_sov), column_config={"Logo": st.column_config.ImageColumn("Logo"), "7D Trend Chart": st.column_config.LineChartColumn("7D Trend Chart")}, use_container_width=True, hide_index=True)
         else:
             st.warning("🔄 Re-syncing Sovereign Nodes...")
 
@@ -111,4 +110,4 @@ if m_key == MASTER_KEY:
 
 else:
     st.info("⚠️ Master Key Required to Access Node.")
-                
+        
