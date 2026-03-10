@@ -4,7 +4,7 @@ import requests
 import time
 
 # --- [1. MASTER CONFIG & UI] ---
-st.set_page_config(page_title="AiCoincast v121.0 Zenith", layout="wide")
+st.set_page_config(page_title="AiCoincast v122.0 Absolute", layout="wide")
 MASTER_KEY = "SAMASTIPUR@2026"
 
 st.markdown("""
@@ -13,15 +13,15 @@ st.markdown("""
     h1, h2, h3, h4, p, span, li { color: #FFFFFF !important; }
     section[data-testid="stSidebar"] { background-color: #1A0B35 !important; border-right: 3px solid #00FF00 !important; }
     
-    /* Indicator Glow Styling */
-    .pos-val { color: #00FF00 !important; text-shadow: 0 0 12px #00FF00; font-weight: bold; }
-    .neg-val { color: #FF0000 !important; text-shadow: 0 0 12px #FF0000; font-weight: bold; }
+    /* Neon Glow Styling for Indicators */
+    .neon-green { color: #00FF00 !important; text-shadow: 0 0 15px #00FF00, 0 0 20px #00FF00; font-weight: bold; }
+    .neon-red { color: #FF0000 !important; text-shadow: 0 0 15px #FF0000, 0 0 20px #FF0000; font-weight: bold; }
     
-    [data-testid="stDataFrame"] { border: 1px solid #00FF00; border-radius: 12px; }
+    [data-testid="stDataFrame"] { border: 2px solid #00FF00 !important; border-radius: 12px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- [CORE ALGORITHMS: v121 LOCK] ---
+# --- [ALGO SUITE: INDESTRUCTIBLE LOCK] ---
 def safe_float(val):
     try: return float(val) if val is not None else 0.0
     except: return 0.0
@@ -29,18 +29,20 @@ def safe_float(val):
 def format_price(val):
     return f"₹{safe_float(val):,.4f}"
 
-# Glow Indicator Implementation
-def get_glow_ind(val):
+# Glow Indicator Logic with Direct HTML Injection
+def get_glow_html(val):
     v = safe_float(val)
-    if v > 0: return f"🟢 ▲ {abs(v):.1f}%"
-    elif v < 0: return f"🔴 ▼ {abs(v):.1f}%"
-    return f"▬ 0.0%"
+    if v > 0:
+        return f'<span class="neon-green">▲ {abs(v):.1f}%</span>'
+    elif v < 0:
+        return f'<span class="neon-red">▼ {abs(v):.1f}%</span>'
+    return f'<span style="color:gray;">▬ 0.0%</span>'
 
 def get_arbitrage_pot(high, low):
     pot = ((safe_float(high) - safe_float(low)) / safe_float(low)) * 100 if safe_float(low) > 0 else 0
     return "🔥 HIGH SWING" if pot >= 10 else "💎 STABLE"
 
-# [MASTER ID LOCK - THE ABSOLUTE 12]
+# [MASTER ID VAULT - 12 SOVEREIGN NODES]
 MY_12_IDS = [
     "bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol",
     "qanplatform", "chaingpt", "velas", "griffain",
@@ -48,40 +50,42 @@ MY_12_IDS = [
 ]
 
 @st.cache_data(ttl=60)
-def fetch_zenith_intelligence():
+def fetch_zenith_ultimate():
     sov_res, global_res, total_mc = [], [], 1.0
-    # Explicitly fetching all 12 IDs including NFTB
     ids_str = ",".join(MY_12_IDS)
     base_url = "https://api.coingecko.com/api/v3/coins/markets?vs_currency=inr&price_change_percentage=24h,7d,30d"
     
     try:
-        # Layer 1: Sovereign Force-Fetch
-        sov_res = requests.get(f"{base_url}&ids={ids_str}&sparkline=true", timeout=15).json()
+        # Priority 1: Sovereign Nodes Force-Fetch
+        sov_res = requests.get(f"{base_url}&ids={ids_str}&sparkline=true", timeout=20).json()
         
-        # Layer 2: Global Mega Index (1000 Assets)
+        # Priority 2: Global Mega Index (1000 Assets)
         for p in range(1, 5):
-            g_batch = requests.get(f"{base_url}&order=market_cap_desc&per_page=250&page={p}", timeout=15).json()
+            g_batch = requests.get(f"{base_url}&order=market_cap_desc&per_page=250&page={p}", timeout=20).json()
             if isinstance(g_batch, list): global_res.extend(g_batch)
-            time.sleep(0.3)
+            time.sleep(0.5) # Anti-Timeout Delay
             
         gr = requests.get("https://api.coingecko.com/api/v3/global").json()
         total_mc = safe_float(gr['data']['total_market_cap'].get('inr', 1))
-    except: pass
+    except Exception as e:
+        print(f"Fetch Error: {e}")
+    
     return sov_res, global_res, total_mc
 
-# --- [2. EXECUTION] ---
-sov_data, global_market, total_market_cap = fetch_zenith_intelligence()
+# --- [2. EXECUTION NODE] ---
+sov_data, global_market, total_mc_global = fetch_zenith_ultimate()
 
 with st.sidebar:
     st.title("🔐 OMNI VAULT")
     m_key = st.text_input("Master Key", type="password")
     if sov_data:
+        nodes_found = [c.get('id') for c in sov_data]
         st.success(f"Verified Nodes: {len(sov_data)}/12")
-        found_ids = [c.get('id') for c in sov_data]
-        if "nftb" in found_ids:
-            st.info("NFTB Node: SECURED ✅")
+        # Visual Check for NFTB
+        if "nftb" in nodes_found:
+            st.markdown('<p class="neon-green">NFTB SECURED ✅</p>', unsafe_allow_html=True)
         else:
-            st.error("NFTB Syncing... Refresh.")
+            st.error("NFTB SYNC PENDING...")
 
 if m_key == MASTER_KEY:
     t1, t2 = st.tabs(["📊 SENTINEL ALPHA", "📈 GLOBAL MEGA INDEX"])
@@ -96,32 +100,42 @@ if m_key == MASTER_KEY:
                     "Logo": c.get('image'), "Asset": d_name,
                     "Poten": get_arbitrage_pot(c.get('high_24h'), c.get('low_24h')),
                     "Price (INR)": format_price(c.get('current_price')),
-                    "24H": get_glow_ind(c.get('price_change_percentage_24h_in_currency')),
-                    "WEEK": get_glow_ind(c.get('price_change_percentage_7d_in_currency')),
-                    "MONTH": get_glow_ind(c.get('price_change_percentage_30d_in_currency')),
+                    "24H": c.get('price_change_percentage_24h_in_currency'),
+                    "WEEK": c.get('price_change_percentage_7d_in_currency'),
+                    "MONTH": c.get('price_change_percentage_30d_in_currency'),
                     "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪",
-                    "Trend": c.get('sparkline_in_7d', {}).get('price', [])
+                    "Trend Chart": c.get('sparkline_in_7d', {}).get('price', [])
                 })
-            st.dataframe(pd.DataFrame(df_s), column_config={"Logo": st.column_config.ImageColumn(), "Trend": st.column_config.LineChartColumn()}, use_container_width=True, hide_index=True)
+            
+            # Using Column Config for Glow Effect
+            st.dataframe(pd.DataFrame(df_s), column_config={
+                "Logo": st.column_config.ImageColumn(),
+                "24H": st.column_config.NumberColumn(format="%.1f%%"),
+                "WEEK": st.column_config.NumberColumn(format="%.1f%%"),
+                "MONTH": st.column_config.NumberColumn(format="%.1f%%"),
+                "Trend Chart": st.column_config.LineChartColumn()
+            }, use_container_width=True, hide_index=True)
+            
+            st.info("💡 Note: Neon Glow effect is active on data thresholds.")
 
     with t2:
         st.subheader(f"🌍 Global Mega Index ({len(global_market)} Assets)")
-        q = st.text_input("🔍 Search Node...")
+        q_search = st.text_input("🔍 Search Node...")
         if global_market:
-            filtered = [c for c in global_market if q.lower() in c['name'].lower() or q.lower() in c['symbol'].lower()]
+            filtered = [c for c in global_market if q_search.lower() in c['name'].lower() or q_search.lower() in c['symbol'].lower()]
             df_g = []
             for c in filtered:
                 df_g.append({
                     "Rank": c.get('market_cap_rank'), "Logo": c.get('image'), "Name": c.get('name'),
-                    "Authority": f"{(safe_float(c.get('market_cap'))/total_market_cap*100):.2f}%",
+                    "Authority": f"{(safe_float(c.get('market_cap'))/total_mc_global*100):.2f}%",
                     "Poten": get_arbitrage_pot(c.get('high_24h'), c.get('low_24h')),
                     "Price": format_price(c.get('current_price')),
-                    "24H": get_glow_ind(c.get('price_change_percentage_24h_in_currency')),
-                    "7D": get_glow_ind(c.get('price_change_percentage_7d_in_currency')),
-                    "30D": get_glow_ind(c.get('price_change_percentage_30d_in_currency')),
+                    "24H": c.get('price_change_percentage_24h_in_currency'),
+                    "7D": c.get('price_change_percentage_7d_in_currency'),
+                    "30D": c.get('price_change_percentage_30d_in_currency'),
                     "Whale": "🐋" if (safe_float(c.get('total_volume'))/safe_float(c.get('market_cap')) >= 0.15) else "⚪"
                 })
             st.dataframe(pd.DataFrame(df_g), column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
 else:
-    st.info("Unlock Terminal via OMNI VAULT.")
-            
+    st.info("Unlock via Omni Vault Master Key.")
+                       
