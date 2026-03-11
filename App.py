@@ -120,4 +120,4 @@ if m_key == MASTER_KEY:
         st.dataframe(g_df, column_config={"Logo": st.column_config.ImageColumn()}, use_container_width=True, hide_index=True)
 else:
     st.warning("🔒 Sovereign Master, authentication required.")
-            
+        
