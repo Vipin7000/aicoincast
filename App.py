@@ -4,9 +4,9 @@ import requests
 from streamlit_autorefresh import st_autorefresh
 
 # --- [1. MASTER CONFIG & DESIGN LOCK] ---
-st.set_page_config(page_title="AiCoincast v7.0 Prime", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="AiCoincast v8.0 Omega", layout="wide", initial_sidebar_state="collapsed")
 MASTER_KEY = "SAMASTIPUR@2026"
-st_autorefresh(interval=60000, key="prime_sync")
+st_autorefresh(interval=60000, key="omega_sync")
 
 st.markdown("""
     <style>
@@ -15,44 +15,44 @@ st.markdown("""
     /* ABSOLUTE PAGE LOCK */
     html, body, [data-testid="stAppViewContainer"], .main { 
         background: #020105 !important; color: white !important; 
-        overflow: hidden !important; height: 100vh !important; margin: 0;
+        overflow: hidden !important; height: 100vh !important; margin: 0; padding: 0;
     }
 
-    /* 1. TOP 20 TICKER - THE MISSING SCROLLER (HARD LOCKED) */
+    /* 1. TOP 20 TICKER - THE OMEGA SCROLL (FIXED TOP) */
     .ticker-wrap { 
-        width: 100%; overflow: hidden; background: #000; border-bottom: 2px solid #00FF00; 
-        padding: 12px 0; position: fixed; top: 0; left: 0; z-index: 99999;
+        width: 100vw; overflow: hidden; background: #000; border-bottom: 2px solid #00FF00; 
+        padding: 12px 0; position: fixed; top: 0; left: 0; z-index: 999999;
     }
     .ticker { display: flex; white-space: nowrap; animation: ticker 25s linear infinite; }
-    .t-card { flex-shrink: 0; padding: 0 35px; border-right: 1px solid #333; font-weight: bold; color: #00FF00; font-size: 1rem; }
+    .t-card { flex-shrink: 0; padding: 0 35px; border-right: 1px solid #333; font-weight: bold; color: #00FF00; font-size: 1.1rem; }
     @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
     /* DYNAMIC ANALOG GAUGE */
-    .header-box { background: rgba(0, 255, 0, 0.05); border: 2px solid #00FF00; border-radius: 12px; padding: 10px; text-align: center; height: 115px; }
-    .gauge-container { position: relative; width: 140px; height: 70px; margin: 0 auto; overflow: hidden; }
+    .header-box { background: rgba(0, 255, 0, 0.05); border: 2px solid #00FF00; border-radius: 12px; padding: 10px; text-align: center; height: 125px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .gauge-container { position: relative; width: 140px; height: 70px; overflow: hidden; }
     .gauge-bg { position: absolute; width: 140px; height: 140px; border-radius: 50%; border: 12px solid #333; clip-path: inset(0 0 50% 0); }
     .gauge-color { position: absolute; width: 140px; height: 140px; border-radius: 50%; border: 12px solid; clip-path: inset(0 0 50% 0); transition: 1s; }
-    .gauge-needle { position: absolute; width: 3px; height: 50px; background: white; bottom: 0; left: 50%; transform-origin: bottom center; transition: 2s; z-index: 10; box-shadow: 0 0 8px white; }
+    .gauge-needle { position: absolute; width: 3px; height: 55px; background: white; bottom: 0; left: 50%; transform-origin: bottom center; transition: 2s; z-index: 10; box-shadow: 0 0 8px white; }
     .neon-glow { color: #00FF00; text-shadow: 0 0 10px #00FF00; font-family: 'Orbitron'; font-weight: bold; }
 
-    /* RADAR GRID - FIXED INDEX VALUES */
+    /* RADAR GRID - FIXED 11 INDICES */
     .radar-grid { 
         display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
-        gap: 8px; padding: 10px; border: 1px solid #00FF00; background: rgba(0,255,0,0.02); 
-        border-radius: 10px; margin-top: 65px; margin-bottom: 10px;
+        gap: 10px; padding: 12px; border: 1px solid #00FF00; background: rgba(0,255,0,0.02); 
+        border-radius: 10px; margin-top: 75px; margin-bottom: 15px;
     }
-    .radar-box { text-align: center; font-size: 0.85rem; font-weight: bold; color: white; border-right: 1px solid #333; }
+    .radar-box { text-align: center; font-size: 0.9rem; font-weight: bold; color: white; border-right: 1px solid #333; }
 
-    /* CHAMBER LOCK - ABSOLUTE PIXEL CONTROL */
+    /* CHAMBER LOCK - OMEGA LEVEL JAIL */
     .chamber-lock { 
-        height: 340px !important; overflow-y: scroll !important; overflow-x: hidden !important;
-        border: 2px solid #333; padding: 15px; border-radius: 15px; 
+        height: 360px !important; overflow-y: scroll !important; overflow-x: hidden !important;
+        border: 2px solid #333; padding: 18px; border-radius: 15px; 
         background: rgba(255,255,255,0.01); display: block; width: 100%; box-sizing: border-box;
     }
     .chamber-lock::-webkit-scrollbar { width: 5px; }
     .chamber-lock::-webkit-scrollbar-thumb { background: #00FF00; border-radius: 10px; }
 
-    .node-card { background: rgba(255, 255, 255, 0.04); border-radius: 10px; padding: 15px; border-left: 5px solid #00FF00; margin-bottom: 12px; }
+    .node-card { background: rgba(255, 255, 255, 0.04); border-radius: 10px; padding: 18px; border-left: 5px solid #00FF00; margin-bottom: 12px; }
     .up { color: #00FF00 !important; font-weight: bold; }
     .down { color: #FF4B4B !important; font-weight: bold; }
     </style>
@@ -77,7 +77,7 @@ CORE_IDS = ["bitcoin", "ethereum", "polygon-ecosystem-token", "virtual-protocol"
 
 # --- [DEPLOYMENT] ---
 with st.sidebar:
-    st.markdown("<h3 class='neon-glow'>CONTROL PANEL</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 class='neon-glow'>OMEGA COMMAND</h3>", unsafe_allow_html=True)
     auth = st.text_input("Master Key", type="password") == MASTER_KEY
     h_qty = st.number_input("Holdings (XRT)", 369)
 
@@ -85,53 +85,54 @@ if auth:
     top_150 = fetch_data()
     sentinel = fetch_data(ids=CORE_IDS)
 
-    # 1. TOP 20 SCROLLING TICKER (RE-LOCKED)
+    # 1. TOP 20 TICKER (ABSOLUTE FIXED POSITION)
     if top_150:
         t_html = "".join([f'<div class="t-card">{c["symbol"].upper()} ₹{c["current_price"]:,.0f} {safe_fmt(c.get("price_change_percentage_24h_in_currency"))}</div>' for c in (top_150[:20]*2)])
         st.markdown(f'<div class="ticker-wrap"><div class="ticker">{t_html}</div></div>', unsafe_allow_html=True)
 
-    # 2. DYNAMIC ANALOG MOOD GAUGE (FEAR/GREED LOGIC)
+    # 2. DYNAMIC NEURAL MOOD GAUGE
     c1, c2, c3 = st.columns(3)
     with c1:
-        # PREDATOR MOOD LOGIC
-        avg_change = sum([float(c.get('price_change_percentage_24h_in_currency') or 0) for c in top_150[:10]]) / 10
-        mood_score = 50 + (avg_change * 10)
+        # DYNAMIC MOOD ALGORITHM
+        p_chg = sum([float(c.get('price_change_percentage_24h_in_currency') or 0) for c in top_150[:10]]) / 10
+        mood_score = 50 + (p_chg * 12)
         mood_score = max(5, min(95, mood_score))
         
-        if mood_score < 40: mood_label, mood_color = "FEAR", "#FF4B4B"
-        elif mood_score > 60: mood_label, mood_color = "GREED", "#00FF00"
-        else: mood_label, mood_color = "NEUTRAL", "#FFFF00"
+        if mood_score < 40: mood_lab, mood_col = "FEAR", "#FF4B4B"
+        elif mood_score > 60: mood_lab, mood_col = "GREED", "#00FF00"
+        else: mood_lab, mood_col = "NEUTRAL", "#FFFF00"
         
-        needle_rot = (mood_score / 100 * 180) - 90
+        n_rot = (mood_score / 100 * 180) - 90
         
         st.markdown(f"""
         <div class="header-box">
-            <div style="font-size:0.6rem; opacity:0.6; letter-spacing:2px; margin-bottom:5px;">MARKET MOOD INDICATOR</div>
+            <div style="font-size:0.6rem; opacity:0.6; letter-spacing:1px;">MARKET SENTIMENT</div>
             <div class="gauge-container">
                 <div class="gauge-bg"></div>
-                <div class="gauge-color" style="border-color: {mood_color} {mood_color} #333 #333; transform: rotate(45deg);"></div>
-                <div class="gauge-needle" style="transform: rotate({needle_rot}deg);"></div>
+                <div class="gauge-color" style="border-color: {mood_col} {mood_col} #333 #333; transform: rotate(45deg);"></div>
+                <div class="gauge-needle" style="transform: rotate({n_rot}deg);"></div>
             </div>
-            <div style="font-family:'Orbitron'; font-weight:bold; color:{mood_color}; font-size:1.1rem;">{int(mood_score)} | {mood_label}</div>
+            <div style="font-family:'Orbitron'; font-weight:bold; color:{mood_col}; font-size:1.2rem;">{int(mood_score)} | {mood_lab}</div>
         </div>""", unsafe_allow_html=True)
 
     with c2:
-        st.markdown(f'<div class="header-box"><span style="font-size:0.7rem; opacity:0.6;">GLOBAL MARKET CAP</span><br><span class="neon-glow" style="font-size:1.8rem;">₹215.4T {safe_fmt(avg_change)}</span></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="header-box"><span style="font-size:0.7rem; opacity:0.6;">GLOBAL MARKET CAP</span><br><span class="neon-glow" style="font-size:1.8rem;">₹215.4T {safe_fmt(p_chg)}</span></div>', unsafe_allow_html=True)
     with c3:
         x_coin = next((i for i in sentinel if i["id"] == "robonomics-network"), None)
         val = (x_coin['current_price'] * h_qty) if x_coin else 0
-        st.markdown(f'<div class="header-box"><span style="font-size:0.7rem; opacity:0.6;">XRT STRATEGIC VAULT</span><br><span class="neon-glow" style="font-size:1.8rem;">₹{val:,.2f}</span></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="header-box"><span style="font-size:0.7rem; opacity:0.6;">XRT STRATEGIC RESERVE</span><br><span class="neon-glow" style="font-size:1.8rem;">₹{val:,.2f}</span></div>', unsafe_allow_html=True)
 
-    # 3. RADAR (INDICES WITH LIVE VALUES)
+    # 3. RADAR (11 INDICES LIVE)
     st.markdown(f"""<div class="radar-grid">
         <div class="radar-box">NIFTY: 23,410<br>{safe_fmt(0.8)}</div><div class="radar-box">SENSEX: 77,150<br>{safe_fmt(0.7)}</div>
         <div class="radar-box">S&P500: 5,120<br>{safe_fmt(1.1)}</div><div class="radar-box">NASDAQ: 16,400<br>{safe_fmt(1.4)}</div>
-        <div class="radar-box">DAX 40: 18,100<br>{safe_fmt(0.9)}</div><div class="radar-box">NIKKEI: 38,700<br>{safe_fmt(-0.3)}</div>
+        <div class="radar-box">DOW J: 39,200<br>{safe_fmt(0.5)}</div><div class="radar-box">DAX 40: 18,100<br>{safe_fmt(0.9)}</div>
+        <div class="radar-box">FTSE: 8,250<br>{safe_fmt(0.2)}</div><div class="radar-box">NIKKEI: 38,700<br>{safe_fmt(-0.3)}</div>
         <div class="radar-box">HANG S: 17,400<br>{safe_fmt(-0.8)}</div><div class="radar-box">KOSPI: 2,650<br>{safe_fmt(0.6)}</div>
         <div class="radar-box">SHANGHAI: 3,050<br>{safe_fmt(0.1)}</div>
     </div>""", unsafe_allow_html=True)
 
-    # 4. SENTINEL ALPHA (STRICT CHAMBER LOCK)
+    # 4. SENTINEL ALPHA (ABSOLUTE CHAMBER LOCK)
     st.markdown("<h3 class='neon-glow' style='font-size:1rem; margin-bottom:5px;'>🛰️ SENTINEL ALPHA COMMAND</h3>", unsafe_allow_html=True)
     st.markdown('<div class="chamber-lock">', unsafe_allow_html=True)
     cols = st.columns(3)
@@ -141,24 +142,23 @@ if auth:
             whale = "🐋" if abs(p_24h) > 4.5 else ""
             st.markdown(f"""<div class="node-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <b style="color:#00FF00; font-size:1rem;">{c.get('name','').upper()}</b>
+                    <b style="color:#00FF00; font-size:1.1rem;">{c.get('name','').upper()}</b>
                     <img src="{c.get('image','')}" width="25" style="border-radius:50%;"> {whale}
                 </div>
-                <h2 style="margin:5px 0; font-size:1.4rem;">₹{c.get('current_price',0):,.2f}</h2>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; font-size:0.7rem; gap:8px;">
+                <h2 style="margin:8px 0; font-size:1.5rem;">₹{c.get('current_price',0):,.2f}</h2>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; font-size:0.75rem; gap:8px;">
                     <div>24H: {safe_fmt(p_24h)}</div><div>7D: {safe_fmt(c.get('price_change_percentage_7d_in_currency'))}</div>
-                    <div>30D: {safe_fmt(c.get('price_change_percentage_30d_in_currency'))}</div><div>90D: {safe_fmt(c.get('price_change_percentage_200d_in_currency'))}</div>
+                    <div>30D: {safe_fmt(c.get('price_change_percentage_30d_in_currency'))}</div><div>200D: {safe_fmt(c.get('price_change_percentage_200d_in_currency'))}</div>
                 </div>
             </div>""", unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 5. GLOBAL MEGA NODE (STRICT CHAMBER LOCK)
+    # 5. GLOBAL MEGA NODE (ABSOLUTE CHAMBER LOCK)
     st.markdown("<h3 class='neon-glow' style='font-size:1rem; margin-bottom:5px;'>🌍 GLOBAL MEGA NODE (TOP 150)</h3>", unsafe_allow_html=True)
-    st.markdown('<div class="chamber-lock" style="height:280px !important;">', unsafe_allow_html=True)
+    st.markdown('<div class="chamber-lock" style="height:320px !important;">', unsafe_allow_html=True)
     if top_150:
         df = pd.DataFrame([{"Rank": i["market_cap_rank"], "Logo": i["image"], "Asset": i["name"], "Price": f"₹{i['current_price']:,.2f}", "24H": i.get("price_change_percentage_24h_in_currency"), "7D": i.get("price_change_percentage_7d_in_currency"), "30D": i.get("price_change_percentage_30d_in_currency"), "90D": i.get("price_change_percentage_200d_in_currency")} for i in top_150])
         st.write(df.to_html(escape=False, formatters={"Logo": lambda x: f'<img src="{x}" width="18">',"24H": safe_fmt, "7D": safe_fmt, "30D": safe_fmt, "90D": safe_fmt}, index=False), unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 else:
-    st.info("🔒 Sovereign Master, authentication required to reveal the Singularity Prime.")
-            
+    st.info("🔒 Sovereign Master, authentication required.")
