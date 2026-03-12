@@ -153,4 +153,4 @@ if st.sidebar.text_input("Master Key", type="password") == MASTER_KEY:
     st.markdown('</div>', unsafe_allow_html=True)
 else:
     st.info("🔒 Sovereign Master, authentication required.")
-                          
+        
